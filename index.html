@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Betinho — Agent Constellation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 100vw;
+    height: 100vh;
+    background: #0A0E1A;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    color: #fff;
+  }
+
+  /* Title */
+  .title {
+    position: fixed;
+    top: 20px;
+    left: 0; right: 0;
+    text-align: center;
+    z-index: 20;
+  }
+  .title h1 {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 28px;
+    color: #FFD700;
+    text-shadow: 0 0 20px rgba(255,215,0,0.4);
+    letter-spacing: 4px;
+  }
+  .title p {
+    font-size: 11px;
+    color: #556688;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .lang-flags {
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+  .lang-flag {
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .lang-flag:hover { opacity: 0.8; transform: scale(1.2); }
+  .lang-flag.active { opacity: 1; transform: scale(1.1); }
+
+  /* Legend */
+  .legend {
+    position: fixed;
+    bottom: 80px;
+    left: 0; right: 0;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 20px;
+    pointer-events: none;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .legend-label {
+    font-size: 10px;
+    color: #667788;
+    letter-spacing: 1px;
+  }
+
+  /* Canvas for particles and connections */
+  #bgCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+  }
+
+  /* SVG for graph */
+  #graphSvg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    display: none;
+  }
+
+  /* Node labels */
+  .node-group { cursor: pointer; }
+  .node-circle {
+    transition: r 0.3s, filter 0.3s;
+  }
+  .node-group:hover .node-circle {
+    filter: brightness(1.5) drop-shadow(0 0 12px currentColor);
+  }
+  .node-label {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    fill: #AAB;
+    font-size: 10px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .node-group:hover .node-label {
+    opacity: 1;
+  }
+  .node-tagline {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    fill: #778;
+    font-size: 8px;
+    font-style: italic;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .node-group:hover .node-tagline {
+    opacity: 1;
+  }
+
+  /* Connection lines */
+  .link {
+    stroke-opacity: 0.15;
+    transition: stroke-opacity 0.3s;
+  }
+
+  /* Card overlay */
+  .card-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(5,5,15,0);
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(0px);
+    transition: background 0.5s, backdrop-filter 0.5s;
+  }
+  .card-overlay.active {
+    display: flex;
+    background: rgba(5,5,15,0.85);
+    backdrop-filter: blur(8px);
+  }
+
+
+  /* Card inside overlay */
+  /* Aspect ratio matches Front.png 327:538 */
+  .card-scene {
+    width: 380px;
+    height: 625px;
+    perspective: 1200px;
+  }
+  .card {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-face {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    backface-visibility: hidden;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  /* Front */
+  .card-front { background: #080C18; }
+  .card-front::before {
+    content: '';
+    position: absolute;
+    top: -3px; left: -3px; right: -3px; bottom: -3px;
+    background: conic-gradient(from 0deg, #FFD700, #FF3900, #00D4FF, #FF3900, #FFD700);
+    border-radius: 17px; z-index: -1;
+    opacity: 0.4; filter: blur(10px);
+    animation: glow 6s linear infinite;
+  }
+  @keyframes glow { 0%,100% { opacity: 0.3; } 50% { opacity: 0.6; } }
+
+  .art-layer {
+    position: absolute;
+    top: 12.1%; left: 13.5%;
+    width: 74%; height: 52.8%;
+    overflow: hidden;
+  }
+  .art-layer img { width: 100%; height: 120%; object-fit: cover; object-position: center 15%; }
+  .frame-layer {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; z-index: 2; pointer-events: none;
+  }
+  .frame-layer img { width: 100%; height: 100%; object-fit: fill; }
+
+  .card-name-area {
+    position: absolute; top: 4.5%;
+    left: 0; right: 0; text-align: center; z-index: 3;
+  }
+  .card-name {
+    font-family: 'Cinzel', serif; font-weight: 900; font-size: 22px;
+    color: #FFD700;
+    text-shadow: 0 0 12px rgba(255,215,0,0.6), 0 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 2px;
+  }
+  .card-title-area {
+    position: absolute; top: 66%;
+    left: 0; right: 0; text-align: center; padding: 4px 20px; z-index: 3;
+  }
+  .card-title {
+    font-family: 'Cinzel', serif; font-weight: 700; font-size: 14px;
+    color: #FFFFFF; text-transform: uppercase; letter-spacing: 1.5px;
+    text-shadow: 0 0 8px rgba(0,212,255,0.4), 0 1px 3px rgba(0,0,0,0.9);
+  }
+  .card-abilities-area {
+    position: absolute; top: 73%; left: 0; right: 0; bottom: 7%;
+    padding: 2px 14px 2px 52px;
+    display: flex; flex-direction: column; justify-content: flex-start;
+    gap: 3px; z-index: 3; overflow: hidden;
+  }
+  .card-tagline {
+    font-style: italic; font-size: 9px; color: #9999CC;
+    text-align: left; padding-bottom: 4px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+  .ability-name { font-weight: 700; font-size: 10px; color: #00D4FF; text-shadow: 0 0 6px rgba(0,212,255,0.3); }
+  .ability-desc { font-size: 9.5px; color: #9999BB; line-height: 1.3; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+  .card-number-text {
+    position: absolute; bottom: 5%; right: 8%;
+    font-size: 13px; font-weight: 700; color: #8899BB;
+    letter-spacing: 1px; z-index: 3; text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+  .card-set-text {
+    position: absolute; bottom: 4%; left: 26%;
+    font-size: 10px; color: #8899BB;
+    letter-spacing: 1px; z-index: 3; text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+
+  /* Back */
+  .card-back { transform: rotateY(180deg); }
+  .card-back img {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; object-fit: cover; border-radius: 14px;
+  }
+
+  /* Shine */
+  .shine {
+    position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    z-index: 10; pointer-events: none; transition: left 0.5s; border-radius: 14px;
+  }
+  .card-scene:hover .shine { left: 160%; }
+
+  /* Close hint */
+  .close-hint {
+    position: fixed; top: 20px; right: 30px;
+    color: rgba(255,255,255,0.3); font-size: 12px;
+    letter-spacing: 2px; text-transform: uppercase; z-index: 60;
+    display: none;
+  }
+  .card-overlay.active ~ .close-hint { display: block; }
+
+  /* Bottom info */
+  .bottom-info {
+    position: fixed; bottom: 16px;
+    left: 0; right: 0; text-align: center;
+    z-index: 20; pointer-events: none;
+  }
+  .bottom-info span {
+    font-size: 10px; color: #334; letter-spacing: 2px; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="title">
+  <h1>TIME BETINHO</h1>
+  <p id="subtitle">30 Agents — 1 Constellation</p>
+  <div class="lang-flags">
+    <span class="lang-flag" data-lang="en" onclick="setLang('en')">🇺🇸</span>
+    <span class="lang-flag" data-lang="es" onclick="setLang('es')">🇦🇷</span>
+    <span class="lang-flag active" data-lang="pt" onclick="setLang('pt')">🇧🇷</span>
+  </div>
+</div>
+
+<canvas id="bgCanvas"></canvas>
+<svg id="graphSvg"></svg>
+
+<!-- Card overlay (populated by JS) -->
+<div class="card-overlay" id="cardOverlay">
+  <div class="card-scene" id="cardScene">
+    <div class="card" id="cardInner">
+      <div class="card-face card-front" id="cardFront">
+        <div class="art-layer"><img id="cardArtImg" src="" alt=""></div>
+        <div class="frame-layer"><img src="Assets/Cards/Front.png" alt="Frame"></div>
+        <div class="card-name-area"><span class="card-name" id="cardNameText"></span></div>
+        <div class="card-title-area"><span class="card-title" id="cardTitleText"></span></div>
+        <div class="card-abilities-area" id="cardAbilities"></div>
+        <span class="card-set-text">TIME BETINHO</span>
+        <span class="card-number-text" id="cardNumberText"></span>
+        <div class="shine"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#FFD700"></div><span class="legend-label">Boss</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#FF3900"></div><span class="legend-label">Orchestrator</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#00D4FF"></div><span class="legend-label">Consultation</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#AA44FF"></div><span class="legend-label">Compound</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#44CC88"></div><span class="legend-label">Production</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#E8445A"></div><span class="legend-label">Specialist</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#CC44FF"></div><span class="legend-label">Autonomous</span></div>
+</div>
+
+<div class="bottom-info">
+  <span>Click a node to reveal its card</span>
+</div>
+
+<script>
+// ============ i18n ============
+let currentLang = 'pt';
+
+const i18n = {
+  subtitle: { en: '30 Agents — 1 Constellation', es: '30 Agentes — 1 Constelación', pt: '30 Agentes — 1 Constelação' },
+  clickHint: { en: 'Click a node to reveal its card', es: 'Haz clic en un nodo para ver su carta', pt: 'Clique em um nó para revelar sua carta' },
+  titles: {
+    jp:         { en: 'The Boss', es: 'El Jefe', pt: 'O Chefe' },
+    betinho:    { en: 'The Maestro', es: 'El Maestro', pt: 'O Maestro' },
+    echo:       { en: 'The Listener', es: 'El Oyente', pt: 'O Ouvinte' },
+    postman:    { en: 'The Messenger', es: 'El Mensajero', pt: 'O Mensageiro' },
+    clockwork:  { en: 'The Timekeeper', es: 'El Cronómetro', pt: 'O Relojoeiro' },
+    vault:      { en: 'The Archivist', es: 'El Archivero', pt: 'O Arquivista' },
+    grid:       { en: 'The Analyst', es: 'El Analista', pt: 'O Analista' },
+    scribe:     { en: 'The Reader', es: 'El Lector', pt: 'O Leitor' },
+    tracker:    { en: 'The Hunter', es: 'El Cazador', pt: 'O Caçador' },
+    oracle:     { en: 'The Sage', es: 'El Sabio', pt: 'O Sábio' },
+    keeper:     { en: 'The Guardian', es: 'El Guardián', pt: 'O Guardião' },
+    scout:      { en: 'The Watcher', es: 'El Vigía', pt: 'O Vigia' },
+    lens:       { en: 'The Seer', es: 'El Vidente', pt: 'O Vidente' },
+    sentinel:   { en: 'The Commander', es: 'El Comandante', pt: 'O Comandante' },
+    nexus:      { en: 'The Strategist', es: 'El Estratega', pt: 'O Estrategista' },
+    polyglot:   { en: 'The Linguist', es: 'El Lingüista', pt: 'O Linguista' },
+    painter:    { en: 'The Artist', es: 'El Artista', pt: 'O Artista' },
+    press:      { en: 'The Printer', es: 'El Impresor', pt: 'O Impressor' },
+    forge:      { en: 'The Factory', es: 'La Fábrica', pt: 'A Fábrica' },
+    detective:  { en: 'The Investigator', es: 'El Investigador', pt: 'O Investigador' },
+    judge:      { en: 'The Jurist', es: 'El Jurista', pt: 'O Jurista' },
+    surgeon:    { en: 'The Analyst', es: 'El Cirujano', pt: 'O Cirurgião' },
+    strategist: { en: 'The Advisor', es: 'El Asesor', pt: 'O Conselheiro' },
+    watchman:   { en: 'The Observer', es: 'El Observador', pt: 'O Observador' },
+    treasurer:  { en: 'The Accountant', es: 'El Tesorero', pt: 'O Tesoureiro' },
+    recruiter:  { en: 'The Headhunter', es: 'El Cazatalentos', pt: 'O Recrutador' },
+    director:   { en: 'The Producer', es: 'El Director', pt: 'O Diretor' },
+    printer:    { en: 'The Formatter', es: 'El Formateador', pt: 'O Formatador' },
+    librarian:  { en: 'The Curator', es: 'El Curador', pt: 'O Curador' }
+  },
+  taglines: {
+    jp:         { en: '"Every agent answers to someone. They all answer to me."', es: '"Todo agente responde a alguien. Todos me responden a mi."', pt: '"Todo agente responde a alguém. Todos respondem a mim."' },
+    betinho:    { en: '"I don\'t just delegate. I conduct symphonies of data."', es: '"No solo delego. Dirijo sinfonías de datos."', pt: '"Eu não apenas delego. Eu rejo sinfonias de dados."' },
+    echo:       { en: '"Every whisper in every channel. I hear them all."', es: '"Cada susurro en cada canal. Los escucho todos."', pt: '"Cada sussurro em cada canal. Eu ouço todos."' },
+    postman:    { en: '"Your inbox is my battlefield. Nothing gets past unread."', es: '"Tu bandeja de entrada es mi campo de batalla."', pt: '"Sua caixa de entrada é meu campo de batalha."' },
+    clockwork:  { en: '"Time is the one resource I never waste."', es: '"El tiempo es el único recurso que nunca desperdicio."', pt: '"Tempo é o único recurso que nunca desperdiço."' },
+    vault:      { en: '"Every file has a place. I know them all."', es: '"Cada archivo tiene su lugar. Los conozco todos."', pt: '"Todo arquivo tem seu lugar. Eu sei onde estão todos."' },
+    grid:       { en: '"Numbers don\'t lie. But they need someone to read them."', es: '"Los números no mienten. Pero necesitan quien los lea."', pt: '"Números não mentem. Mas precisam de quem os leia."' },
+    scribe:     { en: '"Every word written. Every meaning understood."', es: '"Cada palabra escrita. Cada significado comprendido."', pt: '"Toda palavra escrita. Todo significado compreendido."' },
+    tracker:    { en: '"No ticket escapes. No deadline hides."', es: '"Ningún ticket escapa. Ningún plazo se oculta."', pt: '"Nenhum ticket escapa. Nenhum prazo se esconde."' },
+    oracle:     { en: '"The knowledge is there. You just need to know where to look."', es: '"El conocimiento está ahí. Solo necesitas saber dónde buscar."', pt: '"O conhecimento está lá. Só precisa saber onde procurar."' },
+    keeper:     { en: '"Every commit tells a story. I guard them all."', es: '"Cada commit cuenta una historia. Las guardo todas."', pt: '"Cada commit conta uma história. Eu guardo todas."' },
+    scout:      { en: '"I see every click, every signup, every conversion."', es: '"Veo cada clic, cada registro, cada conversión."', pt: '"Vejo cada clique, cada cadastro, cada conversão."' },
+    lens:       { en: '"Past the numbers, I see the truth they\'re trying to tell you."', es: '"Más allá de los números, veo la verdad que intentan contarte."', pt: '"Além dos números, eu vejo a verdade que tentam contar."' },
+    sentinel:   { en: '"Six agents. One briefing. Your day, decoded before coffee."', es: '"Seis agentes. Un briefing. Tu día, decodificado."', pt: '"Seis agentes. Um briefing. Seu dia, decodificado."' },
+    nexus:      { en: '"Separate data is noise. Connected data is power."', es: '"Datos separados son ruido. Conectados son poder."', pt: '"Dados separados são ruído. Conectados são poder."' },
+    polyglot:   { en: '"One thought. Three languages. Zero meaning lost."', es: '"Un pensamiento. Tres idiomas. Cero significado perdido."', pt: '"Um pensamento. Três idiomas. Zero significado perdido."' },
+    painter:    { en: '"Give me markdown. I\'ll give you a masterpiece."', es: '"Dame markdown. Te devolveré una obra maestra."', pt: '"Me dê markdown. Eu te devolvo uma obra-prima."' },
+    press:      { en: '"From screen to paper. Pixel-perfect, every time."', es: '"De la pantalla al papel. Pixel-perfecto, siempre."', pt: '"Da tela ao papel. Pixel-perfeito, sempre."' },
+    forge:      { en: '"One command. Nine files. Three languages. All perfect."', es: '"Un comando. Nueve archivos. Tres idiomas. Perfectos."', pt: '"Um comando. Nove arquivos. Três idiomas. Perfeitos."' },
+    detective:  { en: '"Frame by frame. Screen by screen. Every detail catalogued."', es: '"Fotograma a fotograma. Pantalla a pantalla."', pt: '"Frame por frame. Tela por tela. Cada detalhe catalogado."' },
+    judge:      { en: '"The law is complex. My analysis is clear."', es: '"La ley es compleja. Mi análisis es claro."', pt: '"A lei é complexa. Minha análise é clara."' },
+    surgeon:    { en: '"I don\'t just read tickets. I dissect entire epics."', es: '"No solo leo tickets. Disecciono epics enteros."', pt: '"Não apenas leio tickets. Disseco epics inteiros."' },
+    strategist: { en: '"Walk into every meeting three steps ahead."', es: '"Entra a cada reunión tres pasos adelante."', pt: '"Entre em cada reunião três passos à frente."' },
+    watchman:   { en: '"While you sleep, I watch the wiki."', es: '"Mientras duermes, vigilo la wiki."', pt: '"Enquanto você dorme, eu vigio a wiki."' },
+    treasurer:  { en: '"Every real accounted for. Every cent justified."', es: '"Cada real contabilizado. Cada centavo justificado."', pt: '"Cada real contabilizado. Cada centavo justificado."' },
+    recruiter:  { en: '"The right person for the right role. I find them."', es: '"La persona correcta para el rol correcto."', pt: '"A pessoa certa para a função certa. Eu encontro."' },
+    director:   { en: '"From raw ideas to polished episodes. That\'s my craft."', es: '"De ideas crudas a episodios pulidos."', pt: '"De ideias brutas a episódios polidos."' },
+    printer:    { en: '"Corporate format. Every margin. Every header. Perfect."', es: '"Formato corporativo. Cada margen. Perfecto."', pt: '"Formato corporativo. Cada margem. Perfeito."' },
+    librarian:  { en: '"I never rest. While you work, I organize."', es: '"Nunca descanso. Mientras trabajas, organizo."', pt: '"Nunca descanso. Enquanto você trabalha, eu organizo."' }
+  },
+  abilities: {
+    jp: {
+      en: [{ name: 'Strategic Vision', desc: '— Define the direction of the entire team' },{ name: 'Final Call', desc: '— No external action without his approval' },{ name: 'Market Instinct', desc: '— Detects opportunities before data confirms' }],
+      es: [{ name: 'Visión Estratégica', desc: '— Define la dirección de todo el equipo' },{ name: 'Decisión Final', desc: '— Ninguna acción externa sin su aprobación' },{ name: 'Instinto de Mercado', desc: '— Detecta oportunidades antes que los datos confirmen' }],
+      pt: [{ name: 'Visão Estratégica', desc: '— Define a direção de todo o time' },{ name: 'Decisão Final', desc: '— Nenhuma ação externa sem sua aprovação' },{ name: 'Instinto de Mercado', desc: '— Detecta oportunidades antes dos dados confirmarem' }]
+    },
+    betinho: {
+      en: [{ name: 'Orchestration', desc: '— Coordinates 28 agents simultaneously' },{ name: 'Context Shield', desc: '— Protects main context from raw data' },{ name: 'Adaptive Routing', desc: '— Knows which agent to call for each request' }],
+      es: [{ name: 'Orquestación', desc: '— Coordina 28 agentes simultáneamente' },{ name: 'Escudo de Contexto', desc: '— Protege el contexto principal de datos brutos' },{ name: 'Enrutamiento Adaptativo', desc: '— Sabe qué agente llamar para cada solicitud' }],
+      pt: [{ name: 'Orquestração', desc: '— Coordena 28 agentes simultaneamente' },{ name: 'Escudo de Contexto', desc: '— Protege o contexto principal de dados brutos' },{ name: 'Roteamento Adaptativo', desc: '— Sabe qual agente acionar para cada pedido' }]
+    },
+    echo: {
+      en: [{ name: 'Channel Sweep', desc: '— Monitors all channels and DMs' },{ name: 'Thread Trace', desc: '— Tracks related threads and conversations' },{ name: 'Urgency Sense', desc: '— Auto-classifies messages by urgency' }],
+      es: [{ name: 'Barrido de Canales', desc: '— Monitorea todos los canales y DMs' },{ name: 'Rastreo de Hilos', desc: '— Rastrea hilos y conversaciones relacionadas' },{ name: 'Sentido de Urgencia', desc: '— Clasifica mensajes por urgencia automáticamente' }],
+      pt: [{ name: 'Varredura de Canais', desc: '— Monitora todos os canais e DMs' },{ name: 'Rastreio de Threads', desc: '— Rastreia threads e conversas relacionadas' },{ name: 'Senso de Urgência', desc: '— Classifica mensagens por urgência automaticamente' }]
+    },
+    postman: {
+      en: [{ name: 'Inbox Scan', desc: '— Reads and classifies unread emails' },{ name: 'Draft Forge', desc: '— Creates drafts with professional formatting' },{ name: 'Thread Link', desc: '— Connects emails to meetings and projects' }],
+      es: [{ name: 'Escaneo de Bandeja', desc: '— Lee y clasifica emails no leídos' },{ name: 'Forja de Borradores', desc: '— Crea borradores con formato profesional' },{ name: 'Enlace de Hilos', desc: '— Conecta emails con reuniones y proyectos' }],
+      pt: [{ name: 'Varredura de Inbox', desc: '— Lê e classifica emails não lidos' },{ name: 'Forja de Rascunhos', desc: '— Cria rascunhos com formatação profissional' },{ name: 'Link de Threads', desc: '— Conecta emails a reuniões e projetos' }]
+    },
+    clockwork: {
+      en: [{ name: 'Day Map', desc: '— Visualizes schedule with conflicts and gaps' },{ name: 'Conflict Alert', desc: '— Auto-detects overlapping events' },{ name: 'Prep Window', desc: '— Identifies prep time before meetings' }],
+      es: [{ name: 'Mapa del Día', desc: '— Visualiza agenda con conflictos y huecos' },{ name: 'Alerta de Conflicto', desc: '— Detecta sobreposiciones automáticamente' },{ name: 'Ventana de Prep', desc: '— Identifica tiempo de preparación antes de reuniones' }],
+      pt: [{ name: 'Mapa do Dia', desc: '— Visualiza agenda com conflitos e janelas' },{ name: 'Alerta de Conflito', desc: '— Detecta sobreposições automaticamente' },{ name: 'Janela de Prep', desc: '— Identifica tempo de preparação antes de reuniões' }]
+    },
+    vault: {
+      en: [{ name: 'Deep Search', desc: '— Finds any file by name, content or date' },{ name: 'Share Watch', desc: '— Monitors recent shares' },{ name: 'Version Track', desc: '— Tracks version history' }],
+      es: [{ name: 'Búsqueda Profunda', desc: '— Encuentra cualquier archivo por nombre, contenido o fecha' },{ name: 'Vigía de Compartidos', desc: '— Monitorea compartidos recientes' },{ name: 'Rastreo de Versiones', desc: '— Rastrea historial de versiones' }],
+      pt: [{ name: 'Busca Profunda', desc: '— Encontra qualquer arquivo por nome, conteúdo ou data' },{ name: 'Vigília de Shares', desc: '— Monitora compartilhamentos recentes' },{ name: 'Rastreio de Versões', desc: '— Rastreia histórico de versões' }]
+    },
+    grid: {
+      en: [{ name: 'Data Pull', desc: '— Extracts data from any spreadsheet' },{ name: 'Pattern Scan', desc: '— Detects trends and anomalies' },{ name: 'Cell Precision', desc: '— Surgical operations on specific cells' }],
+      es: [{ name: 'Extracción de Datos', desc: '— Extrae datos de cualquier planilla' },{ name: 'Escaneo de Patrones', desc: '— Detecta tendencias y anomalías' },{ name: 'Precisión Celular', desc: '— Operaciones quirúrgicas en celdas específicas' }],
+      pt: [{ name: 'Extração de Dados', desc: '— Extrai dados de qualquer planilha' },{ name: 'Scan de Padrões', desc: '— Detecta tendências e anomalias' },{ name: 'Precisão Celular', desc: '— Operações cirúrgicas em células específicas' }]
+    },
+    scribe: {
+      en: [{ name: 'Doc Read', desc: '— Reads and interprets Google Docs' },{ name: 'Content Extract', desc: '— Extracts sections with context' },{ name: 'Format Sense', desc: '— Understands structure and hierarchy' }],
+      es: [{ name: 'Lectura de Docs', desc: '— Lee e interpreta Google Docs' },{ name: 'Extracción de Contenido', desc: '— Extrae secciones con contexto' },{ name: 'Sentido de Formato', desc: '— Entiende estructura y jerarquía' }],
+      pt: [{ name: 'Leitura de Docs', desc: '— Lê e interpreta Google Docs' },{ name: 'Extração de Conteúdo', desc: '— Extrai seções com contexto' },{ name: 'Senso de Formato', desc: '— Entende estrutura e hierarquia' }]
+    },
+    tracker: {
+      en: [{ name: 'Issue Hunt', desc: '— Searches and filters tickets' },{ name: 'Sprint Map', desc: '— Visualizes sprints and backlogs' },{ name: 'Mention Scan', desc: '— Detects unanswered mentions' }],
+      es: [{ name: 'Caza de Issues', desc: '— Busca y filtra tickets' },{ name: 'Mapa de Sprint', desc: '— Visualiza sprints y backlogs' },{ name: 'Escaneo de Menciones', desc: '— Detecta menciones sin respuesta' }],
+      pt: [{ name: 'Caça de Issues', desc: '— Busca e filtra tickets' },{ name: 'Mapa de Sprint', desc: '— Visualiza sprints e backlogs' },{ name: 'Scan de Menções', desc: '— Detecta menções sem resposta' }]
+    },
+    oracle: {
+      en: [{ name: 'Page Search', desc: '— Deep search across pages and spaces' },{ name: 'Update Watch', desc: '— Monitors recent updates' },{ name: 'Knowledge Map', desc: '— Connects related pages' }],
+      es: [{ name: 'Búsqueda de Páginas', desc: '— Búsqueda profunda en páginas y espacios' },{ name: 'Vigía de Updates', desc: '— Monitorea actualizaciones recientes' },{ name: 'Mapa de Conocimiento', desc: '— Conecta páginas relacionadas' }],
+      pt: [{ name: 'Busca de Páginas', desc: '— Busca profunda em páginas e espaços' },{ name: 'Vigília de Updates', desc: '— Monitora atualizações recentes' },{ name: 'Mapa de Conhecimento', desc: '— Conecta páginas relacionadas' }]
+    },
+    keeper: {
+      en: [{ name: 'Repo Watch', desc: '— Monitors repos and pull requests' },{ name: 'Code Search', desc: '— Searches code by pattern' },{ name: 'History Trace', desc: '— Tracks commit history' }],
+      es: [{ name: 'Vigía de Repos', desc: '— Monitorea repos y pull requests' },{ name: 'Búsqueda de Código', desc: '— Busca código por patrón' },{ name: 'Rastreo de Historial', desc: '— Rastrea historial de commits' }],
+      pt: [{ name: 'Vigília de Repos', desc: '— Monitora repos e pull requests' },{ name: 'Busca de Código', desc: '— Busca código por padrão' },{ name: 'Rastreio de Histórico', desc: '— Rastreia histórico de commits' }]
+    },
+    scout: {
+      en: [{ name: 'Campaign Radar', desc: '— Monitors all campaigns by publisher' },{ name: 'Conversion Track', desc: '— Tracks full funnel' },{ name: 'ROI Lens', desc: '— Calculates real CPA and ROI' }],
+      es: [{ name: 'Radar de Campañas', desc: '— Monitorea todas las campañas por publisher' },{ name: 'Rastreo de Conversión', desc: '— Rastrea el funnel completo' },{ name: 'Lente de ROI', desc: '— Calcula CPA real y ROI' }],
+      pt: [{ name: 'Radar de Campanhas', desc: '— Monitora todas as campanhas por publisher' },{ name: 'Rastreio de Conversão', desc: '— Rastreia funil completo' },{ name: 'Lente de ROI', desc: '— Calcula CPA real e ROI' }]
+    },
+    lens: {
+      en: [{ name: 'DAX Vision', desc: '— Executes DAX queries for KPIs' },{ name: 'Dashboard Read', desc: '— Reads complete dashboards' },{ name: 'Trend Prophecy', desc: '— Identifies trends and projects scenarios' }],
+      es: [{ name: 'Visión DAX', desc: '— Ejecuta queries DAX para KPIs' },{ name: 'Lectura de Dashboard', desc: '— Lee dashboards completos' },{ name: 'Profecía de Tendencias', desc: '— Identifica tendencias y proyecta escenarios' }],
+      pt: [{ name: 'Visão DAX', desc: '— Executa queries DAX para KPIs' },{ name: 'Leitura de Dashboard', desc: '— Lê dashboards completos' },{ name: 'Profecia de Tendências', desc: '— Identifica tendências e projeta cenários' }]
+    },
+    sentinel: {
+      en: [{ name: 'Dawn Protocol', desc: '— Launches 6 agents in parallel' },{ name: 'Cross-Source Intel', desc: '— Correlates all data sources' },{ name: 'Priority Matrix', desc: '— Ranks actions by urgency and impact' }],
+      es: [{ name: 'Protocolo Aurora', desc: '— Lanza 6 agentes en paralelo' },{ name: 'Intel Multi-Fuente', desc: '— Correlaciona todas las fuentes de datos' },{ name: 'Matriz de Prioridad', desc: '— Clasifica acciones por urgencia e impacto' }],
+      pt: [{ name: 'Protocolo Aurora', desc: '— Lança 6 agentes em paralelo' },{ name: 'Intel Multi-Fonte', desc: '— Correlaciona todas as fontes de dados' },{ name: 'Matriz de Prioridade', desc: '— Classifica ações por urgência e impacto' }]
+    },
+    nexus: {
+      en: [{ name: 'Data Fusion', desc: '— Crosses Power BI + MyAffiliates' },{ name: 'Funnel Architect', desc: '— Rebuilds full conversion funnel' },{ name: 'Source Router', desc: '— Auto-decides which source to query' }],
+      es: [{ name: 'Fusión de Datos', desc: '— Cruza Power BI + MyAffiliates' },{ name: 'Arquitecto de Funnel', desc: '— Reconstruye el funnel de conversión completo' },{ name: 'Enrutador de Fuentes', desc: '— Decide automáticamente qué fuente consultar' }],
+      pt: [{ name: 'Fusão de Dados', desc: '— Cruza Power BI + MyAffiliates' },{ name: 'Arquiteto de Funil', desc: '— Reconstrói funil de conversão completo' },{ name: 'Roteador de Fontes', desc: '— Decide automaticamente qual fonte consultar' }]
+    },
+    polyglot: {
+      en: [{ name: 'Triple Render', desc: '— Translates to EN, ES, PT-BR' },{ name: 'Tone Match', desc: '— Preserves tone and formality' },{ name: 'Tech Fluency', desc: '— iGaming, marketing, tech terminology' }],
+      es: [{ name: 'Triple Render', desc: '— Traduce a EN, ES, PT-BR' },{ name: 'Ajuste de Tono', desc: '— Preserva tono y formalidad' },{ name: 'Fluidez Técnica', desc: '— Terminología de iGaming, marketing y tech' }],
+      pt: [{ name: 'Triple Render', desc: '— Traduz para EN, ES, PT-BR' },{ name: 'Ajuste de Tom', desc: '— Preserva tom e formalidade' },{ name: 'Fluência Técnica', desc: '— Terminologia de iGaming, marketing e tech' }]
+    },
+    painter: {
+      en: [{ name: 'Style Forge', desc: '— Converts Markdown to HTML with BW CSS' },{ name: 'Brand Lock', desc: '— Maintains visual consistency' },{ name: 'Responsive Craft', desc: '— Adapts layout for any format' }],
+      es: [{ name: 'Forja de Estilo', desc: '— Convierte Markdown a HTML con CSS BW' },{ name: 'Bloqueo de Marca', desc: '— Mantiene consistencia visual' },{ name: 'Artesanía Responsiva', desc: '— Adapta layout para cualquier formato' }],
+      pt: [{ name: 'Forja de Estilo', desc: '— Converte Markdown em HTML com CSS BW' },{ name: 'Trava de Marca', desc: '— Mantém consistência visual' },{ name: 'Artesanato Responsivo', desc: '— Adapta layout para qualquer formato' }]
+    },
+    press: {
+      en: [{ name: 'PDF Forge', desc: '— Generates PDFs via WeasyPrint' },{ name: 'Page Break Master', desc: '— Precise page break control' },{ name: 'Print Ready', desc: '— A4, margins, headers/footers' }],
+      es: [{ name: 'Forja de PDF', desc: '— Genera PDFs via WeasyPrint' },{ name: 'Maestro de Saltos', desc: '— Control preciso de saltos de página' },{ name: 'Listo para Imprimir', desc: '— A4, márgenes, encabezados/pies' }],
+      pt: [{ name: 'Forja de PDF', desc: '— Gera PDFs via WeasyPrint' },{ name: 'Mestre de Quebras', desc: '— Controle preciso de quebras de página' },{ name: 'Pronto pra Impressão', desc: '— A4, margens, headers/footers' }]
+    },
+    forge: {
+      en: [{ name: 'Mass Production', desc: '— Translate + HTML + PDF in parallel' },{ name: 'Quality Control', desc: '— Verifies consistency across versions' },{ name: 'Assembly Line', desc: '— Orchestrates Polyglot + Painter + Press' }],
+      es: [{ name: 'Producción Masiva', desc: '— Traduce + HTML + PDF en paralelo' },{ name: 'Control de Calidad', desc: '— Verifica consistencia entre versiones' },{ name: 'Línea de Montaje', desc: '— Orquesta Polyglot + Painter + Press' }],
+      pt: [{ name: 'Produção em Massa', desc: '— Traduz + HTML + PDF em paralelo' },{ name: 'Controle de Qualidade', desc: '— Verifica consistência entre versões' },{ name: 'Linha de Montagem', desc: '— Orquestra Polyglot + Painter + Press' }]
+    },
+    detective: {
+      en: [{ name: 'Frame Extract', desc: '— Captures key frames from videos' },{ name: 'Screen Map', desc: '— Maps screens, fields, verifications' },{ name: 'Compliance Check', desc: '— Verifies regulatory compliance' }],
+      es: [{ name: 'Extracción de Frames', desc: '— Captura frames clave de videos' },{ name: 'Mapa de Pantallas', desc: '— Mapea pantallas, campos, verificaciones' },{ name: 'Check de Compliance', desc: '— Verifica conformidad regulatoria' }],
+      pt: [{ name: 'Extração de Frames', desc: '— Captura frames-chave de vídeos' },{ name: 'Mapa de Telas', desc: '— Mapeia telas, campos, verificações' },{ name: 'Check de Compliance', desc: '— Verifica conformidade regulatória' }]
+    },
+    judge: {
+      en: [{ name: 'Legal Scan', desc: '— Consults Brazilian gambling legislation' },{ name: 'Compliance Shield', desc: '— Verifies LGPD and regulatory compliance' },{ name: 'Contract Eye', desc: '— Analyzes contracts, identifies risks' }],
+      es: [{ name: 'Escaneo Legal', desc: '— Consulta legislación brasileña de apuestas' },{ name: 'Escudo de Compliance', desc: '— Verifica LGPD y conformidad regulatoria' },{ name: 'Ojo de Contratos', desc: '— Analiza contratos, identifica riesgos' }],
+      pt: [{ name: 'Scan Legal', desc: '— Consulta legislação brasileira de apostas' },{ name: 'Escudo de Compliance', desc: '— Verifica LGPD e conformidade regulatória' },{ name: 'Olho de Contratos', desc: '— Analisa contratos, identifica riscos' }]
+    },
+    surgeon: {
+      en: [{ name: 'Epic Dissection', desc: '— Deep analysis of epics with subtasks' },{ name: 'Bottleneck Finder', desc: '— Identifies flow blockers' },{ name: 'Quantitative Report', desc: '— Quali + quanti project reports' }],
+      es: [{ name: 'Disección de Epics', desc: '— Análisis profundo de epics con subtareas' },{ name: 'Buscador de Cuellos', desc: '— Identifica bloqueadores de flujo' },{ name: 'Informe Cuantitativo', desc: '— Informes quali + quanti de proyectos' }],
+      pt: [{ name: 'Dissecação de Epics', desc: '— Análise profunda de epics com subtarefas' },{ name: 'Caça-Gargalos', desc: '— Identifica bloqueios no fluxo' },{ name: 'Relatório Quantitativo', desc: '— Relatórios quali + quanti de projetos' }]
+    },
+    strategist: {
+      en: [{ name: 'Briefing Forge', desc: '— Prepares complete pre-meeting briefing' },{ name: 'People Intel', desc: '— Compiles profile and history' },{ name: 'Agenda Align', desc: '— Connects agenda with tickets and emails' }],
+      es: [{ name: 'Forja de Briefing', desc: '— Prepara briefing pre-reunión completo' },{ name: 'Intel de Personas', desc: '— Compila perfil e historial' },{ name: 'Alineación de Agenda', desc: '— Conecta agenda con tickets y emails' }],
+      pt: [{ name: 'Forja de Briefing', desc: '— Prepara briefing pré-reunião completo' },{ name: 'Intel de Pessoas', desc: '— Compila perfil e histórico' },{ name: 'Alinhamento de Agenda', desc: '— Conecta pauta com tickets e emails' }]
+    },
+    watchman: {
+      en: [{ name: 'Page Monitor', desc: '— Watches specific pages for changes' },{ name: 'Change Alert', desc: '— Alerts on relevant updates' },{ name: 'Diff Report', desc: '— Shows exactly what changed and who' }],
+      es: [{ name: 'Monitor de Páginas', desc: '— Vigila páginas específicas por cambios' },{ name: 'Alerta de Cambios', desc: '— Alerta sobre actualizaciones relevantes' },{ name: 'Informe de Diff', desc: '— Muestra exactamente qué cambió y quién' }],
+      pt: [{ name: 'Monitor de Páginas', desc: '— Vigia páginas específicas por mudanças' },{ name: 'Alerta de Mudanças', desc: '— Alerta sobre atualizações relevantes' },{ name: 'Relatório de Diff', desc: '— Mostra exatamente o que mudou e quem' }]
+    },
+    treasurer: {
+      en: [{ name: 'Budget Map', desc: '— Planned vs actual visualization' },{ name: 'Spend Alert', desc: '— Flags budget deviations' },{ name: 'Forecast', desc: '— Projects financial scenarios' }],
+      es: [{ name: 'Mapa de Budget', desc: '— Visualización planeado vs real' },{ name: 'Alerta de Gastos', desc: '— Señala desvíos presupuestarios' },{ name: 'Pronóstico', desc: '— Proyecta escenarios financieros' }],
+      pt: [{ name: 'Mapa de Budget', desc: '— Planejado vs realizado' },{ name: 'Alerta de Gastos', desc: '— Sinaliza desvios orçamentários' },{ name: 'Projeção', desc: '— Projeta cenários financeiros' }]
+    },
+    recruiter: {
+      en: [{ name: 'JD Forge', desc: '— Creates structured Job Descriptions' },{ name: 'Talent Map', desc: '— Maps required vs available profiles' },{ name: 'Salary Bench', desc: '— Salary benchmarks by role and market' }],
+      es: [{ name: 'Forja de JD', desc: '— Crea Job Descriptions estructuradas' },{ name: 'Mapa de Talento', desc: '— Mapea perfiles requeridos vs disponibles' },{ name: 'Bench Salarial', desc: '— Benchmarks salariales por rol y mercado' }],
+      pt: [{ name: 'Forja de JD', desc: '— Cria Job Descriptions estruturadas' },{ name: 'Mapa de Talento', desc: '— Mapeia perfis necessários vs disponíveis' },{ name: 'Bench Salarial', desc: '— Benchmarks salariais por função e mercado' }]
+    },
+    director: {
+      en: [{ name: 'Script Forge', desc: '— Generates podcast scripts with timing' },{ name: 'Segment Design', desc: '— Structures segments with transitions' },{ name: 'Content Adapt', desc: '— Transforms docs into podcast format' }],
+      es: [{ name: 'Forja de Guión', desc: '— Genera guiones de podcast con timing' },{ name: 'Diseño de Segmentos', desc: '— Estructura segmentos con transiciones' },{ name: 'Adaptación de Contenido', desc: '— Transforma docs en formato podcast' }],
+      pt: [{ name: 'Forja de Roteiro', desc: '— Gera roteiros de podcast com timing' },{ name: 'Design de Segmentos', desc: '— Estrutura segmentos com transições' },{ name: 'Adaptação de Conteúdo', desc: '— Transforma docs em formato podcast' }]
+    },
+    printer: {
+      en: [{ name: 'Template Apply', desc: '— Applies BetWarrior corporate templates' },{ name: 'Format Convert', desc: '— Converts Markdown to .docx' },{ name: 'Brand Enforce', desc: '— Ensures brand guideline consistency' }],
+      es: [{ name: 'Aplicar Template', desc: '— Aplica templates corporativos BetWarrior' },{ name: 'Conversión de Formato', desc: '— Convierte Markdown a .docx' },{ name: 'Imposición de Marca', desc: '— Garantiza consistencia con brand guidelines' }],
+      pt: [{ name: 'Aplicar Template', desc: '— Aplica templates corporativos BetWarrior' },{ name: 'Conversão de Formato', desc: '— Converte Markdown para .docx' },{ name: 'Imposição de Marca', desc: '— Garante consistência com brand guidelines' }]
+    },
+    librarian: {
+      en: [{ name: 'Auto Catalog', desc: '— Catalogs new people, projects, vendors' },{ name: 'Profile Keep', desc: '— Keeps profiles updated with each interaction' },{ name: 'Silent Watch', desc: '— Operates in background without interrupting' }],
+      es: [{ name: 'Catálogo Auto', desc: '— Cataloga nuevas personas, proyectos, proveedores' },{ name: 'Mantener Perfiles', desc: '— Mantiene perfiles actualizados con cada interacción' },{ name: 'Vigía Silencioso', desc: '— Opera en background sin interrumpir' }],
+      pt: [{ name: 'Catálogo Auto', desc: '— Cataloga novas pessoas, projetos, fornecedores' },{ name: 'Manter Perfis', desc: '— Mantém perfis atualizados a cada interação' },{ name: 'Vigília Silenciosa', desc: '— Opera em background sem interromper' }]
+    }
+  },
+  legend: {
+    boss:          { en: 'Boss', es: 'Jefe', pt: 'Chefe' },
+    orchestrator:  { en: 'Orchestrator', es: 'Orquestador', pt: 'Orquestrador' },
+    consultation:  { en: 'Consultation', es: 'Consulta', pt: 'Consulta' },
+    compound:      { en: 'Compound', es: 'Compuesto', pt: 'Composto' },
+    production:    { en: 'Production', es: 'Producción', pt: 'Produção' },
+    specialist:    { en: 'Specialist', es: 'Especialista', pt: 'Especialista' },
+    autonomous:    { en: 'Autonomous', es: 'Autónomo', pt: 'Autônomo' }
+  }
+};
+
+function setLang(lang) {
+  currentLang = lang;
+  // Update flags
+  document.querySelectorAll('.lang-flag').forEach(f => {
+    f.classList.toggle('active', f.dataset.lang === lang);
+  });
+  // Update subtitle
+  document.getElementById('subtitle').textContent = i18n.subtitle[lang];
+  // Update bottom hint
+  document.querySelector('.bottom-info span').textContent = i18n.clickHint[lang];
+  // Update legend
+  const legendLabels = document.querySelectorAll('.legend-label');
+  const legendKeys = ['boss','orchestrator','consultation','compound','production','specialist','autonomous'];
+  legendLabels.forEach((l, idx) => {
+    l.textContent = i18n.legend[legendKeys[idx]][lang];
+  });
+}
+
+// ============ AGENT DATA ============
+const agents = [
+  {
+    id: 'jp', name: 'JP', title: 'The Boss', category: 'boss',
+    tagline: '"Every agent answers to someone. They all answer to me."',
+    abilities: [
+      { name: 'Strategic Vision', desc: '— Define the direction of the entire team' },
+      { name: 'Final Call', desc: '— No external action without his approval' },
+      { name: 'Market Instinct', desc: '— Detects opportunities before data confirms' }
+    ],
+    img: 'Assets/Cards/01-jp-the-boss.png', number: '#001 / 030',
+    color: '#FFD700', radius: 18, parent: null
+  },
+  {
+    id: 'betinho', name: 'Betinho', title: 'The Maestro', category: 'orchestrator',
+    tagline: '"I don\'t just delegate. I conduct symphonies of data."',
+    abilities: [
+      { name: 'Orchestration', desc: '— Coordinates 28 agents simultaneously' },
+      { name: 'Context Shield', desc: '— Protects main context from raw data' },
+      { name: 'Adaptive Routing', desc: '— Knows which agent to call for each request' }
+    ],
+    img: 'Assets/Cards/02-betinho-the-maestro.png', number: '#002 / 030',
+    color: '#FF3900', radius: 15, parent: 'jp'
+  },
+  {
+    id: 'echo', name: 'Echo', title: 'The Listener', category: 'consulta',
+    tagline: '"Every whisper in every channel. I hear them all."',
+    abilities: [
+      { name: 'Channel Sweep', desc: '— Monitors all channels and DMs' },
+      { name: 'Thread Trace', desc: '— Tracks related threads and conversations' },
+      { name: 'Urgency Sense', desc: '— Auto-classifies messages by urgency' }
+    ],
+    img: 'Assets/Cards/03-echo-the-listener.png', number: '#003 / 030',
+    color: '#00D4FF', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'postman', name: 'Postman', title: 'The Messenger', category: 'consulta',
+    tagline: '"Your inbox is my battlefield. Nothing gets past unread."',
+    abilities: [
+      { name: 'Inbox Scan', desc: '— Reads and classifies unread emails' },
+      { name: 'Draft Forge', desc: '— Creates drafts with professional formatting' },
+      { name: 'Thread Link', desc: '— Connects emails to meetings and projects' }
+    ],
+    img: 'Assets/Cards/04-postman-the-messenger.png', number: '#004 / 030',
+    color: '#00D4FF', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'clockwork', name: 'Clockwork', title: 'The Timekeeper', category: 'consulta',
+    tagline: '"Time is the one resource I never waste."',
+    abilities: [
+      { name: 'Day Map', desc: '— Visualizes schedule with conflicts and gaps' },
+      { name: 'Conflict Alert', desc: '— Auto-detects overlapping events' },
+      { name: 'Prep Window', desc: '— Identifies prep time before meetings' }
+    ],
+    img: 'Assets/Cards/05-clockwork-the-timekeeper.png', number: '#005 / 030',
+    color: '#00D4FF', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'vault', name: 'Vault', title: 'The Archivist', category: 'consulta',
+    tagline: '"Every file has a place. I know them all."',
+    abilities: [
+      { name: 'Deep Search', desc: '— Finds any file by name, content or date' },
+      { name: 'Share Watch', desc: '— Monitors recent shares' },
+      { name: 'Version Track', desc: '— Tracks version history' }
+    ],
+    img: 'Assets/Cards/06-vault-the-archivist.png', number: '#006 / 030',
+    color: '#00D4FF', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'grid', name: 'Grid', title: 'The Analyst', category: 'consulta',
+    tagline: '"Numbers don\'t lie. But they need someone to read them."',
+    abilities: [
+      { name: 'Data Pull', desc: '— Extracts data from any spreadsheet' },
+      { name: 'Pattern Scan', desc: '— Detects trends and anomalies' },
+      { name: 'Cell Precision', desc: '— Surgical operations on specific cells' }
+    ],
+    img: 'Assets/Cards/07-grid-the-analyst.png', number: '#007 / 030',
+    color: '#00D4FF', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'scribe', name: 'Scribe', title: 'The Reader', category: 'consulta',
+    tagline: '"Every word written. Every meaning understood."',
+    abilities: [
+      { name: 'Doc Read', desc: '— Reads and interprets Google Docs' },
+      { name: 'Content Extract', desc: '— Extracts sections with context' },
+      { name: 'Format Sense', desc: '— Understands structure and hierarchy' }
+    ],
+    img: 'Assets/Cards/08-scribe-the-reader.png', number: '#008 / 030',
+    color: '#00D4FF', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'tracker', name: 'Tracker', title: 'The Hunter', category: 'consulta',
+    tagline: '"No ticket escapes. No deadline hides."',
+    abilities: [
+      { name: 'Issue Hunt', desc: '— Searches and filters tickets' },
+      { name: 'Sprint Map', desc: '— Visualizes sprints and backlogs' },
+      { name: 'Mention Scan', desc: '— Detects unanswered mentions' }
+    ],
+    img: 'Assets/Cards/09-tracker-the-hunter.png', number: '#009 / 030',
+    color: '#00D4FF', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'oracle', name: 'Oracle', title: 'The Sage', category: 'consulta',
+    tagline: '"The knowledge is there. You just need to know where to look."',
+    abilities: [
+      { name: 'Page Search', desc: '— Deep search across pages and spaces' },
+      { name: 'Update Watch', desc: '— Monitors recent updates' },
+      { name: 'Knowledge Map', desc: '— Connects related pages' }
+    ],
+    img: 'Assets/Cards/10-oracle-the-sage.png', number: '#010 / 030',
+    color: '#00D4FF', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'keeper', name: 'Keeper', title: 'The Guardian', category: 'consulta',
+    tagline: '"Every commit tells a story. I guard them all."',
+    abilities: [
+      { name: 'Repo Watch', desc: '— Monitors repos and pull requests' },
+      { name: 'Code Search', desc: '— Searches code by pattern' },
+      { name: 'History Trace', desc: '— Tracks commit history' }
+    ],
+    img: 'Assets/Cards/11-keeper-the-guardian.png', number: '#011 / 030',
+    color: '#00D4FF', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'scout', name: 'Scout', title: 'The Watcher', category: 'consulta',
+    tagline: '"I see every click, every signup, every conversion."',
+    abilities: [
+      { name: 'Campaign Radar', desc: '— Monitors all campaigns by publisher' },
+      { name: 'Conversion Track', desc: '— Tracks full funnel' },
+      { name: 'ROI Lens', desc: '— Calculates real CPA and ROI' }
+    ],
+    img: 'Assets/Cards/12-scout-the-watcher.png', number: '#012 / 030',
+    color: '#1AE8FF', radius: 10, parent: 'betinho'
+  },
+  {
+    id: 'lens', name: 'Lens', title: 'The Seer', category: 'consulta',
+    tagline: '"Past the numbers, I see the truth they\'re trying to tell you."',
+    abilities: [
+      { name: 'DAX Vision', desc: '— Executes DAX queries for KPIs' },
+      { name: 'Dashboard Read', desc: '— Reads complete dashboards' },
+      { name: 'Trend Prophecy', desc: '— Identifies trends and projects scenarios' }
+    ],
+    img: 'Assets/Cards/13-lens-the-seer.png', number: '#013 / 030',
+    color: '#1AE8FF', radius: 10, parent: 'betinho'
+  },
+  {
+    id: 'sentinel', name: 'Sentinel', title: 'The Commander', category: 'composto',
+    tagline: '"Six agents. One briefing. Your day, decoded before coffee."',
+    abilities: [
+      { name: 'Dawn Protocol', desc: '— Launches 6 agents in parallel' },
+      { name: 'Cross-Source Intel', desc: '— Correlates all data sources' },
+      { name: 'Priority Matrix', desc: '— Ranks actions by urgency and impact' }
+    ],
+    img: 'Assets/Cards/14-sentinel-the-commander.png', number: '#014 / 030',
+    color: '#AA44FF', radius: 12, parent: 'betinho'
+  },
+  {
+    id: 'nexus', name: 'Nexus', title: 'The Strategist', category: 'composto',
+    tagline: '"Separate data is noise. Connected data is power."',
+    abilities: [
+      { name: 'Data Fusion', desc: '— Crosses Power BI + MyAffiliates' },
+      { name: 'Funnel Architect', desc: '— Rebuilds full conversion funnel' },
+      { name: 'Source Router', desc: '— Auto-decides which source to query' }
+    ],
+    img: 'Assets/Cards/15-nexus-the-strategist.png', number: '#015 / 030',
+    color: '#AA44FF', radius: 12, parent: 'betinho'
+  },
+  {
+    id: 'polyglot', name: 'Polyglot', title: 'The Linguist', category: 'producao',
+    tagline: '"One thought. Three languages. Zero meaning lost."',
+    abilities: [
+      { name: 'Triple Render', desc: '— Translates to EN, ES, PT-BR' },
+      { name: 'Tone Match', desc: '— Preserves tone and formality' },
+      { name: 'Tech Fluency', desc: '— iGaming, marketing, tech terminology' }
+    ],
+    img: 'Assets/Cards/16-polyglot-the-linguist.png', number: '#016 / 030',
+    color: '#44CC88', radius: 9, parent: 'betinho'
+  },
+  {
+    id: 'painter', name: 'Painter', title: 'The Artist', category: 'producao',
+    tagline: '"Give me markdown. I\'ll give you a masterpiece."',
+    abilities: [
+      { name: 'Style Forge', desc: '— Converts Markdown to HTML with BW CSS' },
+      { name: 'Brand Lock', desc: '— Maintains visual consistency' },
+      { name: 'Responsive Craft', desc: '— Adapts layout for any format' }
+    ],
+    img: 'Assets/Cards/17-painter-the-artist.png', number: '#017 / 030',
+    color: '#44CC88', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'press', name: 'Press', title: 'The Printer', category: 'producao',
+    tagline: '"From screen to paper. Pixel-perfect, every time."',
+    abilities: [
+      { name: 'PDF Forge', desc: '— Generates PDFs via WeasyPrint' },
+      { name: 'Page Break Master', desc: '— Precise page break control' },
+      { name: 'Print Ready', desc: '— A4, margins, headers/footers' }
+    ],
+    img: 'Assets/Cards/18-press-the-printer.png', number: '#018 / 030',
+    color: '#44CC88', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'forge', name: 'Forge', title: 'The Factory', category: 'producao',
+    tagline: '"One command. Nine files. Three languages. All perfect."',
+    abilities: [
+      { name: 'Mass Production', desc: '— Translate + HTML + PDF in parallel' },
+      { name: 'Quality Control', desc: '— Verifies consistency across versions' },
+      { name: 'Assembly Line', desc: '— Orchestrates Polyglot + Painter + Press' }
+    ],
+    img: 'Assets/Cards/19-forge-the-factory.png', number: '#019 / 030',
+    color: '#44CC88', radius: 9, parent: 'betinho'
+  },
+  {
+    id: 'detective', name: 'Detective', title: 'The Investigator', category: 'producao',
+    tagline: '"Frame by frame. Screen by screen. Every detail catalogued."',
+    abilities: [
+      { name: 'Frame Extract', desc: '— Captures key frames from videos' },
+      { name: 'Screen Map', desc: '— Maps screens, fields, verifications' },
+      { name: 'Compliance Check', desc: '— Verifies regulatory compliance' }
+    ],
+    img: 'Assets/Cards/20-detective-the-investigator.png', number: '#020 / 030',
+    color: '#44CC88', radius: 9, parent: 'betinho'
+  },
+  {
+    id: 'judge', name: 'Judge', title: 'The Jurist', category: 'especializado',
+    tagline: '"The law is complex. My analysis is clear."',
+    abilities: [
+      { name: 'Legal Scan', desc: '— Consults Brazilian gambling legislation' },
+      { name: 'Compliance Shield', desc: '— Verifies LGPD and regulatory compliance' },
+      { name: 'Contract Eye', desc: '— Analyzes contracts, identifies risks' }
+    ],
+    img: 'Assets/Cards/21-judge-the-jurist.png', number: '#021 / 030',
+    color: '#E8445A', radius: 10, parent: 'betinho'
+  },
+  {
+    id: 'surgeon', name: 'Surgeon', title: 'The Analyst', category: 'especializado',
+    tagline: '"I don\'t just read tickets. I dissect entire epics."',
+    abilities: [
+      { name: 'Epic Dissection', desc: '— Deep analysis of epics with subtasks' },
+      { name: 'Bottleneck Finder', desc: '— Identifies flow blockers' },
+      { name: 'Quantitative Report', desc: '— Quali + quanti project reports' }
+    ],
+    img: 'Assets/Cards/22-surgeon-the-analyst.png', number: '#022 / 030',
+    color: '#E8445A', radius: 9, parent: 'betinho'
+  },
+  {
+    id: 'strategist', name: 'Strategist', title: 'The Advisor', category: 'especializado',
+    tagline: '"Walk into every meeting three steps ahead."',
+    abilities: [
+      { name: 'Briefing Forge', desc: '— Prepares complete pre-meeting briefing' },
+      { name: 'People Intel', desc: '— Compiles profile and history' },
+      { name: 'Agenda Align', desc: '— Connects agenda with tickets and emails' }
+    ],
+    img: 'Assets/Cards/23-strategist-the-advisor.png', number: '#023 / 030',
+    color: '#E8445A', radius: 9, parent: 'betinho'
+  },
+  {
+    id: 'watchman', name: 'Watchman', title: 'The Observer', category: 'especializado',
+    tagline: '"While you sleep, I watch the wiki."',
+    abilities: [
+      { name: 'Page Monitor', desc: '— Watches specific pages for changes' },
+      { name: 'Change Alert', desc: '— Alerts on relevant updates' },
+      { name: 'Diff Report', desc: '— Shows exactly what changed and who' }
+    ],
+    img: 'Assets/Cards/24-watchman-the-observer.png', number: '#024 / 030',
+    color: '#E8445A', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'treasurer', name: 'Treasurer', title: 'The Accountant', category: 'especializado',
+    tagline: '"Every real accounted for. Every cent justified."',
+    abilities: [
+      { name: 'Budget Map', desc: '— Planned vs actual visualization' },
+      { name: 'Spend Alert', desc: '— Flags budget deviations' },
+      { name: 'Forecast', desc: '— Projects financial scenarios' }
+    ],
+    img: 'Assets/Cards/25-treasurer-the-accountant.png', number: '#025 / 030',
+    color: '#E8445A', radius: 9, parent: 'betinho'
+  },
+  {
+    id: 'recruiter', name: 'Recruiter', title: 'The Headhunter', category: 'especializado',
+    tagline: '"The right person for the right role. I find them."',
+    abilities: [
+      { name: 'JD Forge', desc: '— Creates structured Job Descriptions' },
+      { name: 'Talent Map', desc: '— Maps required vs available profiles' },
+      { name: 'Salary Bench', desc: '— Salary benchmarks by role and market' }
+    ],
+    img: 'Assets/Cards/26-recruiter-the-headhunter.png', number: '#026 / 030',
+    color: '#E8445A', radius: 9, parent: 'betinho'
+  },
+  {
+    id: 'director', name: 'Director', title: 'The Producer', category: 'especializado',
+    tagline: '"From raw ideas to polished episodes. That\'s my craft."',
+    abilities: [
+      { name: 'Script Forge', desc: '— Generates podcast scripts with timing' },
+      { name: 'Segment Design', desc: '— Structures segments with transitions' },
+      { name: 'Content Adapt', desc: '— Transforms docs into podcast format' }
+    ],
+    img: 'Assets/Cards/27-director-the-producer.png', number: '#027 / 030',
+    color: '#E8445A', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'printer', name: 'Printer', title: 'The Formatter', category: 'especializado',
+    tagline: '"Corporate format. Every margin. Every header. Perfect."',
+    abilities: [
+      { name: 'Template Apply', desc: '— Applies BetWarrior corporate templates' },
+      { name: 'Format Convert', desc: '— Converts Markdown to .docx' },
+      { name: 'Brand Enforce', desc: '— Ensures brand guideline consistency' }
+    ],
+    img: 'Assets/Cards/28-printer-the-formatter.png', number: '#028 / 030',
+    color: '#E8445A', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'librarian', name: 'Librarian', title: 'The Curator', category: 'manutencao',
+    tagline: '"I never rest. While you work, I organize."',
+    abilities: [
+      { name: 'Auto Catalog', desc: '— Catalogs new people, projects, vendors' },
+      { name: 'Profile Keep', desc: '— Keeps profiles updated with each interaction' },
+      { name: 'Silent Watch', desc: '— Operates in background without interrupting' }
+    ],
+    img: 'Assets/Cards/29-librarian-the-curator.png', number: '#029 / 030',
+    color: '#CC44FF', radius: 10, parent: 'betinho'
+  }
+];
+
+// Build links — parent relationships + inter-agent connections
+const links = [];
+// Parent links
+agents.filter(a => a.parent).forEach(a => {
+  links.push({
+    source: agents.findIndex(n => n.id === a.parent),
+    target: agents.findIndex(n => n.id === a.id),
+    type: 'parent'
+  });
+});
+// Inter-agent connections (real relationships)
+const interLinks = [
+  ['sentinel', 'echo'],      // Bom Dia uses Slack
+  ['sentinel', 'postman'],    // Bom Dia uses Gmail
+  ['sentinel', 'clockwork'],  // Bom Dia uses Calendar
+  ['sentinel', 'tracker'],    // Bom Dia uses Jira
+  ['sentinel', 'oracle'],     // Bom Dia uses Confluence
+  ['sentinel', 'vault'],      // Bom Dia uses Drive
+  ['nexus', 'scout'],         // Dados uses Afiliados
+  ['nexus', 'lens'],          // Dados uses Power BI
+  ['forge', 'polyglot'],      // Pipeline uses Tradutor
+  ['forge', 'painter'],       // Pipeline uses HTML
+  ['forge', 'press'],         // Pipeline uses PDF
+  ['librarian', 'oracle'],    // Bibliotecario reads Confluence
+  ['librarian', 'keeper'],    // Bibliotecario uses GitHub
+  ['judge', 'scribe'],        // Lawyer reads Docs
+  ['director', 'oracle'],     // Director uses Confluence
+  ['oracle', 'surgeon'],      // Oracle feeds Surgeon analysis
+  ['director', 'keeper'],     // Director uses GitHub
+  ['printer', 'watchman'],    // Printer monitors Watchman
+  ['polyglot', 'treasurer'],  // Polyglot supports Treasurer
+  ['grid', 'echo'],           // Grid data from Slack
+  ['treasurer', 'recruiter'], // Treasurer works with Recruiter
+];
+interLinks.forEach(([a, b]) => {
+  const si = agents.findIndex(n => n.id === a);
+  const ti = agents.findIndex(n => n.id === b);
+  if (si >= 0 && ti >= 0) links.push({ source: si, target: ti, type: 'inter' });
+});
+
+// ============ CANVAS FOR EVERYTHING ============
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let W, H, centerX, centerY;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  centerX = W / 2;
+  centerY = H / 2;
+}
+resize();
+
+// Stars — positions stored as 0-1 ratios
+const stars = [];
+for (let i = 0; i < 350; i++) {
+  stars.push({
+    rx: Math.random(),
+    ry: Math.random(),
+    r: Math.random() * 1.2 + 0.3,
+    baseAlpha: Math.random() * 0.4 + 0.1,
+    speed: Math.random() * 0.003 + 0.001,
+    phase: Math.random() * Math.PI * 2
+  });
+}
+
+// Colored floating particles (fewer now)
+const particles = [];
+for (let i = 0; i < 30; i++) {
+  particles.push({
+    rx: Math.random(), ry: Math.random(),
+    x: 0, y: 0,
+    vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+    r: Math.random() * 1.5 + 0.3,
+    color: Math.random() > 0.5 ? '#FF3900' : '#00D4FF',
+    alpha: Math.random() * 0.15 + 0.05
+  });
+}
+
+// Energy pulses traveling along wires
+const pulses = [];
+function spawnPulse() {
+  const l = links[Math.floor(Math.random() * links.length)];
+  const dir = Math.random() > 0.5 ? 1 : -1;
+  const color = l.type === 'parent'
+    ? (agents[l.source].id === 'jp' ? '#FFD700' : '#FF3900')
+    : '#00D4FF';
+  pulses.push({ link: l, t: dir === 1 ? 0 : 1, dir, speed: 0.005 + Math.random() * 0.008, color, alpha: 0.9 });
+}
+// Spawn pulses regularly
+setInterval(spawnPulse, 150);
+
+// ============ FORCE SIMULATION ============
+// Seed random for reproducibility
+function seededRandom(seed) { let s = seed; return () => { s = (s * 16807 + 0) % 2147483647; return s / 2147483647; }; }
+const rng = seededRandom(42);
+
+// Place: Betinho center, JP above, others scattered naturally around Betinho
+agents.forEach((a, i) => {
+  if (a.id === 'betinho') {
+    a.x = centerX; a.y = centerY;
+  } else if (a.id === 'jp') {
+    a.x = centerX; a.y = centerY - 280;
+  } else {
+    // Random angle with some jitter — natural feel
+    const angle = rng() * Math.PI * 2;
+    // Most in outer ring, a few closer to fill the gap
+    const r = rng();
+    const dist = r < 0.25 ? (90 + rng() * 50) : (170 + rng() * 70);
+    a.x = centerX + Math.cos(angle) * dist;
+    a.y = centerY + Math.sin(angle) * dist;
+  }
+  a.vx = 0; a.vy = 0;
+});
+
+// Force simulation — natural spread with overlap prevention
+function simulate() {
+  // Repulsion between all non-fixed nodes
+  for (let i = 0; i < agents.length; i++) {
+    if (agents[i].id === 'betinho' || agents[i].id === 'jp') continue;
+    for (let j = i + 1; j < agents.length; j++) {
+      if (agents[j].id === 'betinho' || agents[j].id === 'jp') continue;
+      let dx = agents[j].x - agents[i].x;
+      let dy = agents[j].y - agents[i].y;
+      let d = Math.sqrt(dx * dx + dy * dy) || 1;
+      let minDist = agents[i].radius + agents[j].radius + 60;
+      if (d < minDist) {
+        let push = (minDist - d) * 0.4;
+        agents[i].x -= (dx / d) * push;
+        agents[i].y -= (dy / d) * push;
+        agents[j].x += (dx / d) * push;
+        agents[j].y += (dy / d) * push;
+      }
+    }
+  }
+
+  // Pull agents toward Betinho (keep them in orbit, not flying away)
+  agents.forEach(a => {
+    if (a.id === 'betinho' || a.id === 'jp') return;
+    let dx = centerX - a.x, dy = centerY - a.y;
+    let d = Math.sqrt(dx * dx + dy * dy) || 1;
+    let targetDist = 240;
+    // Only pull back if too far
+    let force = d > targetDist ? (d - targetDist) * 0.015 : 0;
+    a.x += (dx / d) * force;
+    a.y += (dy / d) * force;
+  });
+
+  // Also repel from JP and Betinho
+  agents.forEach(a => {
+    if (a.id === 'betinho' || a.id === 'jp') return;
+    ['betinho', 'jp'].forEach(fixedId => {
+      const f = agents.find(ag => ag.id === fixedId);
+      let dx = a.x - f.x, dy = a.y - f.y;
+      let d = Math.sqrt(dx * dx + dy * dy) || 1;
+      let minD = f.radius + a.radius + 50;
+      if (d < minD) {
+        let push = (minD - d) * 0.5;
+        a.x += (dx / d) * push;
+        a.y += (dy / d) * push;
+      }
+    });
+  });
+
+  // Fix Betinho and JP
+  const b = agents.find(a => a.id === 'betinho');
+  b.x = centerX; b.y = centerY;
+  const jp = agents.find(a => a.id === 'jp');
+  jp.x = centerX; jp.y = centerY - 280;
+
+  // Bounds
+  agents.forEach(a => {
+    a.x = Math.max(80, Math.min(W - 80, a.x));
+    a.y = Math.max(90, Math.min(H - 60, a.y));
+  });
+}
+
+for (let i = 0; i < 300; i++) simulate();
+// Store positions as ratios (0-1) for responsiveness
+agents.forEach(a => {
+  a.rx = a.x / W;
+  a.ry = a.y / H;
+});
+
+// Store offsets from center — reposition on resize keeping same distances
+agents.forEach(a => {
+  a.offX = a.x - centerX;
+  a.offY = a.y - centerY;
+});
+
+function updatePositions() {
+  agents.forEach(a => {
+    a.x = W / 2 + a.offX;
+    a.y = H / 2 + a.offY;
+    a._screenX = a.x;
+    a._screenY = a.y;
+  });
+}
+updatePositions();
+
+window.addEventListener('resize', () => {
+  resize();
+  updatePositions();
+});
+
+// ============ HOVER STATE ============
+let hoveredAgent = null;
+canvas.addEventListener('mousemove', (e) => {
+  hoveredAgent = null;
+  for (const a of agents) {
+    const dx = e.clientX - a.x, dy = e.clientY - a.y;
+    if (Math.sqrt(dx*dx + dy*dy) < a.radius + 15) {
+      hoveredAgent = a;
+      canvas.style.cursor = 'pointer';
+      break;
+    }
+  }
+  if (!hoveredAgent) canvas.style.cursor = 'default';
+});
+
+canvas.addEventListener('click', (e) => {
+  if (hoveredAgent) openCard(hoveredAgent);
+});
+
+// ============ MAIN RENDER LOOP ============
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Stars — pulsating night sky
+  const now = Date.now() * 0.001;
+  stars.forEach(s => {
+    const alpha = s.baseAlpha + Math.sin(now * s.speed * 1000 + s.phase) * s.baseAlpha * 0.6;
+    ctx.beginPath();
+    ctx.arc(s.rx * W, s.ry * H, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = Math.max(0.03, alpha);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Background particles
+  particles.forEach(p => {
+    if (!p.x) { p.x = p.rx * W; p.y = p.ry * H; }
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.alpha;
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  const t = Date.now() * 0.002;
+
+  // Draw links
+  links.forEach(l => {
+    const a = agents[l.source], b = agents[l.target];
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    if (l.type === 'parent') {
+      ctx.strokeStyle = a.id === 'jp' ? '#FFD700' : '#FF3900';
+      ctx.lineWidth = a.id === 'jp' ? 2 : 1.2;
+      ctx.globalAlpha = 0.4;
+    } else {
+      ctx.strokeStyle = '#00D4FF';
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.35;
+      ctx.setLineDash([3, 5]);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  });
+
+  // Draw energy pulses traveling along wires
+  for (let i = pulses.length - 1; i >= 0; i--) {
+    const p = pulses[i];
+    p.t += p.dir * p.speed;
+    if (p.t > 1 || p.t < 0) { pulses.splice(i, 1); continue; }
+
+    const a = agents[p.link.source], b = agents[p.link.target];
+    const px = a.x + (b.x - a.x) * p.t;
+    const py = a.y + (b.y - a.y) * p.t;
+
+    // Glow trail
+    const grad = ctx.createRadialGradient(px, py, 0, px, py, 12);
+    grad.addColorStop(0, p.color);
+    grad.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(px, py, 12, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.globalAlpha = p.alpha * 0.6;
+    ctx.fill();
+
+    // Core dot
+    ctx.beginPath();
+    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = p.alpha;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // Draw nodes
+  agents.forEach((a, i) => {
+    const isHovered = hoveredAgent === a;
+    const pulse = 1 + Math.sin(t + i * 0.5) * 0.12;
+    const r = a.radius * pulse;
+
+    // Outer glow
+    const glow = ctx.createRadialGradient(a.x, a.y, r, a.x, a.y, r + (isHovered ? 25 : 10));
+    glow.addColorStop(0, a.color);
+    glow.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, r + (isHovered ? 25 : 10), 0, Math.PI * 2);
+    ctx.fillStyle = glow;
+    ctx.globalAlpha = isHovered ? 0.4 : 0.15;
+    ctx.fill();
+
+    // Main circle
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = a.color;
+    ctx.globalAlpha = isHovered ? 1 : 0.85;
+    ctx.fill();
+
+    // Inner highlight
+    ctx.beginPath();
+    ctx.arc(a.x - r * 0.2, a.y - r * 0.2, r * 0.35, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = 0.25;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Labels — always visible for JP and Betinho, hover for others
+    const showLabel = isHovered || a.id === 'jp' || a.id === 'betinho';
+    if (showLabel) {
+      // Name
+      ctx.font = `bold ${isHovered ? 16 : 13}px Inter, sans-serif`;
+      ctx.fillStyle = '#DDE';
+      ctx.textAlign = 'center';
+      ctx.globalAlpha = isHovered ? 1 : 0.7;
+      ctx.fillText(a.name, a.x, a.y - r - 12);
+
+      // Title — use current language
+      const title = i18n.titles[a.id] ? i18n.titles[a.id][currentLang] : a.title;
+      ctx.font = `italic ${isHovered ? 13 : 10}px Inter, sans-serif`;
+      ctx.fillStyle = '#889';
+      ctx.globalAlpha = isHovered ? 0.9 : 0.5;
+      ctx.fillText(title, a.x, a.y + r + 18);
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  requestAnimationFrame(draw);
+}
+draw();
+
+// Hide SVG — using canvas now
+document.getElementById('graphSvg').style.display = 'none';
+// Set initial language
+setLang('pt');
+
+// ============ CARD OVERLAY ============
+const overlay = document.getElementById('cardOverlay');
+const cardInner = document.getElementById('cardInner');
+
+function openCard(agent) {
+  const title = i18n.titles[agent.id] ? i18n.titles[agent.id][currentLang] : agent.title;
+  const tagline = i18n.taglines[agent.id] ? i18n.taglines[agent.id][currentLang] : agent.tagline;
+
+  document.getElementById('cardArtImg').src = agent.img;
+  document.getElementById('cardNameText').textContent = agent.name;
+  document.getElementById('cardTitleText').textContent = title;
+  document.getElementById('cardNumberText').textContent = agent.number;
+
+  const abArea = document.getElementById('cardAbilities');
+  const abilities = i18n.abilities[agent.id] ? i18n.abilities[agent.id][currentLang] : agent.abilities;
+  abArea.innerHTML = `<div class="card-tagline">${tagline}</div>`;
+  abilities.forEach(ab => {
+    abArea.innerHTML += `<div style="display:flex;gap:6px"><div><span class="ability-name">${ab.name}</span><span class="ability-desc"> ${ab.desc}</span></div></div>`;
+  });
+
+  const scene = document.getElementById('cardScene');
+  // Calculate offset from agent's node position to screen center
+  const ox = agent._screenX - W / 2;
+  const oy = agent._screenY - H / 2;
+  scene.style.transition = 'none';
+  scene.style.transform = `translate(${ox}px, ${oy}px) scale(0) rotateY(720deg)`;
+  overlay.classList.add('active');
+  scene.offsetHeight;
+  scene.style.transition = 'transform 1.2s cubic-bezier(0.22, 1, 0.36, 1)';
+  scene.style.transform = 'translate(0, 0) scale(1) rotateY(0deg)';
+  // Store current agent for close animation
+  overlay._currentAgent = agent;
+}
+
+// Close overlay — click anywhere outside card
+overlay.addEventListener('click', (e) => {
+  if (e.target === overlay) {
+    const scene = document.getElementById('cardScene');
+    const agent = overlay._currentAgent;
+    const ox = agent ? agent._screenX - W / 2 : 0;
+    const oy = agent ? agent._screenY - H / 2 : 0;
+    scene.style.transition = 'transform 1s cubic-bezier(0.55, 0, 1, 0.45)';
+    scene.style.transform = `translate(${ox}px, ${oy}px) scale(0) rotateY(-720deg)`;
+    setTimeout(() => {
+      overlay.classList.remove('active');
+      scene.style.transition = 'none';
+      scene.style.transform = '';
+    }, 1000);
+  }
+});
+
+// Prevent closing when clicking card itself
+document.getElementById('cardScene').addEventListener('click', (e) => {
+  e.stopPropagation();
+});
+
+// ESC to close
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const scene = document.getElementById('cardScene');
+    const agent = overlay._currentAgent;
+    const ox = agent ? agent._screenX - W / 2 : 0;
+    const oy = agent ? agent._screenY - H / 2 : 0;
+    scene.style.transition = 'transform 1s cubic-bezier(0.55, 0, 1, 0.45)';
+    scene.style.transform = `translate(${ox}px, ${oy}px) scale(0) rotateY(-720deg)`;
+    setTimeout(() => {
+      overlay.classList.remove('active');
+      scene.style.transition = 'none';
+      scene.style.transform = '';
+    }, 1000);
+  }
+});
+</script>
+</body>
+</html>
