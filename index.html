@@ -290,12 +290,12 @@
 <body>
 
 <div class="title">
-  <h1>TIME BETINHO</h1>
+  <h1 id="mainTitle">TEAM BETINHO</h1>
   <p id="subtitle">30 Agents — 1 Constellation</p>
   <div class="lang-flags">
-    <span class="lang-flag" data-lang="en" onclick="setLang('en')">🇺🇸</span>
+    <span class="lang-flag active" data-lang="en" onclick="setLang('en')">🇺🇸</span>
     <span class="lang-flag" data-lang="es" onclick="setLang('es')">🇦🇷</span>
-    <span class="lang-flag active" data-lang="pt" onclick="setLang('pt')">🇧🇷</span>
+    <span class="lang-flag" data-lang="pt" onclick="setLang('pt')">🇧🇷</span>
   </div>
 </div>
 
@@ -339,6 +339,7 @@
 let currentLang = 'pt';
 
 const i18n = {
+  mainTitle: { en: 'TEAM BETINHO', es: 'EQUIPO BETINHO', pt: 'TIME BETINHO' },
   subtitle: { en: '30 Agents — 1 Constellation', es: '30 Agentes — 1 Constelación', pt: '30 Agentes — 1 Constelação' },
   clickHint: { en: 'Click a node to reveal its card', es: 'Haz clic en un nodo para ver su carta', pt: 'Clique em um nó para revelar sua carta' },
   titles: {
@@ -567,7 +568,8 @@ function setLang(lang) {
   document.querySelectorAll('.lang-flag').forEach(f => {
     f.classList.toggle('active', f.dataset.lang === lang);
   });
-  // Update subtitle
+  // Update title and subtitle
+  document.getElementById('mainTitle').textContent = i18n.mainTitle[lang];
   document.getElementById('subtitle').textContent = i18n.subtitle[lang];
   // Update bottom hint
   document.querySelector('.bottom-info span').textContent = i18n.clickHint[lang];
@@ -1266,7 +1268,7 @@ draw();
 // Hide SVG — using canvas now
 document.getElementById('graphSvg').style.display = 'none';
 // Set initial language
-setLang('pt');
+setLang('en');
 
 // ============ CARD OVERLAY ============
 const overlay = document.getElementById('cardOverlay');
