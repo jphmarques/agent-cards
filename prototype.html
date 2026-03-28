@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Card — JP The Boss</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0A0E1A;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+
+  /* Particles */
+  .particles { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; }
+  .particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%; opacity: 0;
+    animation: float-p 4s infinite;
+  }
+  @keyframes float-p {
+    0% { opacity: 0; transform: translateY(0) scale(0); }
+    20% { opacity: 0.7; }
+    100% { opacity: 0; transform: translateY(-200px) scale(1); }
+  }
+
+  .hint {
+    position: fixed; bottom: 24px; color: rgba(255,255,255,0.25); font-size: 12px;
+    letter-spacing: 2px; text-transform: uppercase; z-index: 10;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 0.25; } 50% { opacity: 0.5; } }
+
+  /* Card scene — matches template aspect ratio 327:538 */
+  .card-scene {
+    width: 380px;
+    height: 625px;
+    perspective: 1200px;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .card {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    backface-visibility: hidden;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  /* =================== FRONT =================== */
+  .card-front {
+    position: relative;
+    background: #080C18;
+  }
+
+  /* Layer 1: Character art (behind frame) */
+  .art-layer {
+    position: absolute;
+    /* Position to fill the transparent window area of the frame */
+    top: 12.1%;
+    left: 13.5%;
+    width: 74%;
+    height: 52.8%;
+    overflow: hidden;
+  }
+  .art-layer img {
+    width: 100%;
+    height: 120%;
+    object-fit: cover;
+    object-position: center 15%;
+  }
+
+  /* Layer 2: Frame template (on top, with transparency) */
+  .frame-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .frame-layer img {
+    width: 100%; height: 100%;
+    object-fit: fill;
+  }
+
+  /* Layer 3: Text overlays */
+  .text-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 3;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Name — top area above the art window (0-12%) */
+  .card-name-area {
+    position: absolute;
+    top: 4.5%;
+    left: 0; right: 0;
+    text-align: center;
+    z-index: 3;
+  }
+  .card-name {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 22px;
+    color: #FFD700;
+    text-shadow: 0 0 12px rgba(255,215,0,0.6), 0 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 2px;
+  }
+
+  /* Title — just below the art window */
+  /* Title — on the decorative bar below art (65-70%) */
+  .card-title-area {
+    position: absolute;
+    top: 66%;
+    left: 0; right: 0;
+    text-align: center;
+    padding: 4px 20px;
+    z-index: 3;
+  }
+  .card-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #FFFFFF;
+    text-shadow: 0 0 8px rgba(0,212,255,0.4), 0 1px 3px rgba(0,0,0,0.9);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* Type line */
+  .card-type-area {
+    position: absolute;
+    top: 65%;
+    left: 0; right: 0;
+    text-align: center;
+    padding: 2px 20px;
+    z-index: 3;
+  }
+  .card-type {
+    font-size: 8px;
+    font-weight: 600;
+    color: #8899BB;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+  }
+
+  /* Abilities — bottom area */
+  /* Abilities area (72-93%) */
+  .card-abilities-area {
+    position: absolute;
+    top: 73%;
+    left: 0; right: 0;
+    bottom: 7%;
+    padding: 2px 14px 2px 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 3px;
+    z-index: 3;
+    overflow: hidden;
+  }
+
+  .card-tagline {
+    font-style: italic;
+    font-size: 9px;
+    color: #9999CC;
+    text-align: left;
+    padding-bottom: 4px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+
+  .ability {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .ability-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #00D4FF;
+    box-shadow: 0 0 4px #00D4FF;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .ability-name {
+    font-weight: 700; font-size: 10px;
+    color: #00D4FF;
+    text-shadow: 0 0 6px rgba(0,212,255,0.3);
+  }
+  .ability-desc {
+    font-size: 9.5px;
+    color: #9999BB;
+    line-height: 1.3;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+
+  /* Card number — bottom right */
+  .card-number {
+    position: absolute;
+    bottom: 5%;
+    right: 8%;
+    font-size: 13px;
+    font-weight: 700;
+    color: #8899BB;
+    letter-spacing: 1px;
+    z-index: 3;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+
+  /* Set name — bottom left */
+  .card-set {
+    position: absolute;
+    bottom: 4%;
+    left: 26%;
+    font-size: 10px;
+    color: #8899BB;
+    letter-spacing: 1px;
+    z-index: 3;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+
+  /* =================== BACK =================== */
+  .card-back {
+    transform: rotateY(180deg);
+  }
+  .card-back img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border-radius: 14px;
+  }
+
+  /* =================== EFFECTS =================== */
+  /* Mythic glow */
+  .card-front::before {
+    content: '';
+    position: absolute;
+    top: -3px; left: -3px; right: -3px; bottom: -3px;
+    background: conic-gradient(from 0deg, #FFD700, #FF3900, #00D4FF, #FF3900, #FFD700);
+    border-radius: 17px;
+    z-index: -1;
+    opacity: 0.4;
+    animation: glow-spin 6s linear infinite;
+    filter: blur(10px);
+  }
+  @keyframes glow-spin {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+    100% { opacity: 0.3; }
+  }
+
+  .card-scene:hover .card:not(.flipped) {
+    transform: rotateY(-3deg) rotateX(3deg) scale(1.02);
+  }
+  .card-scene:hover .card.flipped {
+    transform: rotateY(177deg) rotateX(3deg) scale(1.02);
+  }
+
+  /* Shine sweep */
+  .shine {
+    position: absolute;
+    top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    z-index: 10; pointer-events: none;
+    transition: left 0.5s;
+    border-radius: 14px;
+  }
+  .card-scene:hover .shine { left: 160%; }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="card-scene" onclick="this.querySelector('.card').classList.toggle('flipped')">
+  <div class="card">
+
+    <!-- FRONT -->
+    <div class="card-face card-front">
+
+      <!-- Layer 1: Character art (behind) -->
+      <div class="art-layer">
+        <img src="Assets/Cards/01-jp-the-boss.png" alt="JP">
+      </div>
+
+      <!-- Layer 2: Frame template (on top) -->
+      <div class="frame-layer">
+        <img src="Assets/Cards/Front.png" alt="Card Frame">
+      </div>
+
+      <!-- Layer 3: Text -->
+      <div class="card-name-area">
+        <span class="card-name">JP</span>
+      </div>
+
+      <div class="card-title-area">
+        <span class="card-title">The Boss</span>
+      </div>
+
+      <div class="card-abilities-area">
+        <div class="card-tagline">"Every agent answers to someone. They all answer to me."</div>
+        <div class="ability">
+          <div><span class="ability-name">Strategic Vision</span><span class="ability-desc"> — Define the direction of the entire team</span></div>
+        </div>
+        <div class="ability">
+          <div><span class="ability-name">Final Call</span><span class="ability-desc"> — No external action without his approval</span></div>
+        </div>
+        <div class="ability">
+          <div><span class="ability-name">Market Instinct</span><span class="ability-desc"> — Detects opportunities before data confirms</span></div>
+        </div>
+      </div>
+
+      <span class="card-set">TIME BETINHO</span>
+      <span class="card-number">#001 / 030</span>
+
+      <div class="shine"></div>
+    </div>
+
+    <!-- BACK -->
+    <div class="card-face card-back">
+      <img src="Assets/Cards/Back.png" alt="Card Back">
+    </div>
+
+  </div>
+</div>
+
+<div class="hint">click to flip</div>
+
+<script>
+  const c = document.getElementById('particles');
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100+'%';
+    p.style.top = (50+Math.random()*50)+'%';
+    p.style.animationDelay = Math.random()*4+'s';
+    p.style.animationDuration = (3+Math.random()*3)+'s';
+    p.style.background = Math.random()>0.5 ? '#FF3900' : '#00D4FF';
+    c.appendChild(p);
+  }
+</script>
+</body>
+</html>

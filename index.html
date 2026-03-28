@@ -1319,9 +1319,20 @@ overlay.addEventListener('click', (e) => {
   }
 });
 
-// Prevent closing when clicking card itself
+// Close when clicking card itself
 document.getElementById('cardScene').addEventListener('click', (e) => {
   e.stopPropagation();
+  const scene = document.getElementById('cardScene');
+  const agent = overlay._currentAgent;
+  const ox = agent ? agent._screenX - W / 2 : 0;
+  const oy = agent ? agent._screenY - H / 2 : 0;
+  scene.style.transition = 'transform 1s cubic-bezier(0.55, 0, 1, 0.45)';
+  scene.style.transform = `translate(${ox}px, ${oy}px) scale(0) rotateY(-720deg)`;
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    scene.style.transition = 'none';
+    scene.style.transform = '';
+  }, 1000);
 });
 
 // ESC to close
