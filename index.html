@@ -242,7 +242,7 @@
   .ability-name { font-weight: 700; font-size: 10px; color: #00D4FF; text-shadow: 0 0 6px rgba(0,212,255,0.3); }
   .ability-desc { font-size: 9.5px; color: #9999BB; line-height: 1.3; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
   .card-number-text {
-    position: absolute; bottom: 5%; right: 8%;
+    position: absolute; bottom: 6.4%; right: 8%;
     font-size: 13px; font-weight: 700; color: #8899BB;
     letter-spacing: 1px; z-index: 3; text-shadow: 0 1px 2px rgba(0,0,0,0.8);
   }
@@ -250,6 +250,13 @@
     position: absolute; bottom: 4%; left: 26%;
     font-size: 10px; color: #8899BB;
     letter-spacing: 1px; z-index: 3; text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+  .card-model-badge {
+    position: absolute; bottom: 3.8%; right: 11%;
+    font-size: 7px; font-weight: 700; letter-spacing: 1.5px;
+    padding: 2px 6px; border-radius: 3px; z-index: 3;
+    text-transform: uppercase;
+    min-width: 55px; text-align: center;
   }
 
   /* Back */
@@ -291,7 +298,7 @@
 
 <div class="title">
   <h1 id="mainTitle">TEAM BETINHO</h1>
-  <p id="subtitle">30 Agents — 1 Constellation</p>
+  <p id="subtitle">33 Agents — 1 Constellation</p>
   <div class="lang-flags">
     <span class="lang-flag active" data-lang="en" onclick="setLang('en')">🇺🇸</span>
     <span class="lang-flag" data-lang="es" onclick="setLang('es')">🇦🇷</span>
@@ -313,6 +320,7 @@
         <div class="card-title-area"><span class="card-title" id="cardTitleText"></span></div>
         <div class="card-abilities-area" id="cardAbilities"></div>
         <span class="card-set-text">TIME BETINHO</span>
+        <span class="card-model-badge" id="cardModelBadge"></span>
         <span class="card-number-text" id="cardNumberText"></span>
         <div class="shine"></div>
       </div>
@@ -340,7 +348,7 @@ let currentLang = 'pt';
 
 const i18n = {
   mainTitle: { en: 'TEAM BETINHO', es: 'EQUIPO BETINHO', pt: 'TIME BETINHO' },
-  subtitle: { en: '30 Agents — 1 Constellation', es: '30 Agentes — 1 Constelación', pt: '30 Agentes — 1 Constelação' },
+  subtitle: { en: '33 Agents — 1 Constellation', es: '33 Agentes — 1 Constelación', pt: '33 Agentes — 1 Constelação' },
   clickHint: { en: 'Click a node to reveal its card', es: 'Haz clic en un nodo para ver su carta', pt: 'Clique em um nó para revelar sua carta' },
   titles: {
     jp:         { en: 'The Boss', es: 'El Jefe', pt: 'O Chefe' },
@@ -584,326 +592,363 @@ function setLang(lang) {
 // ============ AGENT DATA ============
 const agents = [
   {
-    id: 'jp', name: 'JP', title: 'The Boss', category: 'boss',
+    id: 'jp', name: 'JP', title: 'The Boss', category: 'boss', model: 'human',
     tagline: '"Every agent answers to someone. They all answer to me."',
     abilities: [
       { name: 'Strategic Vision', desc: '— Define the direction of the entire team' },
       { name: 'Final Call', desc: '— No external action without his approval' },
       { name: 'Market Instinct', desc: '— Detects opportunities before data confirms' }
     ],
-    img: 'Assets/Cards/01-jp-the-boss.png', number: '#001 / 030',
+    img: 'Assets/Cards/01-jp-the-boss.png', number: '#001 / 033',
     color: '#FFD700', radius: 18, parent: null
   },
   {
-    id: 'betinho', name: 'Betinho', title: 'The Maestro', category: 'orchestrator',
+    id: 'betinho', name: 'Betinho', title: 'The Maestro', category: 'orchestrator', model: 'opus',
     tagline: '"I don\'t just delegate. I conduct symphonies of data."',
     abilities: [
-      { name: 'Orchestration', desc: '— Coordinates 28 agents simultaneously' },
+      { name: 'Orchestration', desc: '— Coordinates 30 agents simultaneously' },
       { name: 'Context Shield', desc: '— Protects main context from raw data' },
       { name: 'Adaptive Routing', desc: '— Knows which agent to call for each request' }
     ],
-    img: 'Assets/Cards/02-betinho-the-maestro.png', number: '#002 / 030',
+    img: 'Assets/Cards/02-betinho-the-maestro.png', number: '#002 / 033',
     color: '#FF3900', radius: 15, parent: 'jp'
   },
   {
-    id: 'echo', name: 'Echo', title: 'The Listener', category: 'consulta',
+    id: 'echo', name: 'Echo', title: 'The Listener', category: 'consulta', model: 'sonnet',
     tagline: '"Every whisper in every channel. I hear them all."',
     abilities: [
       { name: 'Channel Sweep', desc: '— Monitors all channels and DMs' },
       { name: 'Thread Trace', desc: '— Tracks related threads and conversations' },
       { name: 'Urgency Sense', desc: '— Auto-classifies messages by urgency' }
     ],
-    img: 'Assets/Cards/03-echo-the-listener.png', number: '#003 / 030',
+    img: 'Assets/Cards/03-echo-the-listener.png', number: '#003 / 033',
     color: '#00D4FF', radius: 8, parent: 'betinho'
   },
   {
-    id: 'postman', name: 'Postman', title: 'The Messenger', category: 'consulta',
+    id: 'postman', name: 'Postman', title: 'The Messenger', category: 'consulta', model: 'sonnet',
     tagline: '"Your inbox is my battlefield. Nothing gets past unread."',
     abilities: [
       { name: 'Inbox Scan', desc: '— Reads and classifies unread emails' },
       { name: 'Draft Forge', desc: '— Creates drafts with professional formatting' },
       { name: 'Thread Link', desc: '— Connects emails to meetings and projects' }
     ],
-    img: 'Assets/Cards/04-postman-the-messenger.png', number: '#004 / 030',
+    img: 'Assets/Cards/04-postman-the-messenger.png', number: '#004 / 033',
     color: '#00D4FF', radius: 8, parent: 'betinho'
   },
   {
-    id: 'clockwork', name: 'Clockwork', title: 'The Timekeeper', category: 'consulta',
+    id: 'clockwork', name: 'Clockwork', title: 'The Timekeeper', category: 'consulta', model: 'sonnet',
     tagline: '"Time is the one resource I never waste."',
     abilities: [
       { name: 'Day Map', desc: '— Visualizes schedule with conflicts and gaps' },
       { name: 'Conflict Alert', desc: '— Auto-detects overlapping events' },
       { name: 'Prep Window', desc: '— Identifies prep time before meetings' }
     ],
-    img: 'Assets/Cards/05-clockwork-the-timekeeper.png', number: '#005 / 030',
+    img: 'Assets/Cards/05-clockwork-the-timekeeper.png', number: '#005 / 033',
     color: '#00D4FF', radius: 8, parent: 'betinho'
   },
   {
-    id: 'vault', name: 'Vault', title: 'The Archivist', category: 'consulta',
+    id: 'vault', name: 'Vault', title: 'The Archivist', category: 'consulta', model: 'sonnet',
     tagline: '"Every file has a place. I know them all."',
     abilities: [
       { name: 'Deep Search', desc: '— Finds any file by name, content or date' },
       { name: 'Share Watch', desc: '— Monitors recent shares' },
       { name: 'Version Track', desc: '— Tracks version history' }
     ],
-    img: 'Assets/Cards/06-vault-the-archivist.png', number: '#006 / 030',
+    img: 'Assets/Cards/06-vault-the-archivist.png', number: '#006 / 033',
     color: '#00D4FF', radius: 8, parent: 'betinho'
   },
   {
-    id: 'grid', name: 'Grid', title: 'The Analyst', category: 'consulta',
+    id: 'grid', name: 'Grid', title: 'The Analyst', category: 'consulta', model: 'sonnet',
     tagline: '"Numbers don\'t lie. But they need someone to read them."',
     abilities: [
       { name: 'Data Pull', desc: '— Extracts data from any spreadsheet' },
       { name: 'Pattern Scan', desc: '— Detects trends and anomalies' },
       { name: 'Cell Precision', desc: '— Surgical operations on specific cells' }
     ],
-    img: 'Assets/Cards/07-grid-the-analyst.png', number: '#007 / 030',
+    img: 'Assets/Cards/07-grid-the-analyst.png', number: '#007 / 033',
     color: '#00D4FF', radius: 8, parent: 'betinho'
   },
   {
-    id: 'scribe', name: 'Scribe', title: 'The Reader', category: 'consulta',
+    id: 'scribe', name: 'Scribe', title: 'The Reader', category: 'consulta', model: 'sonnet',
     tagline: '"Every word written. Every meaning understood."',
     abilities: [
       { name: 'Doc Read', desc: '— Reads and interprets Google Docs' },
       { name: 'Content Extract', desc: '— Extracts sections with context' },
       { name: 'Format Sense', desc: '— Understands structure and hierarchy' }
     ],
-    img: 'Assets/Cards/08-scribe-the-reader.png', number: '#008 / 030',
+    img: 'Assets/Cards/08-scribe-the-reader.png', number: '#008 / 033',
     color: '#00D4FF', radius: 8, parent: 'betinho'
   },
   {
-    id: 'tracker', name: 'Tracker', title: 'The Hunter', category: 'consulta',
+    id: 'tracker', name: 'Tracker', title: 'The Hunter', category: 'consulta', model: 'sonnet',
     tagline: '"No ticket escapes. No deadline hides."',
     abilities: [
       { name: 'Issue Hunt', desc: '— Searches and filters tickets' },
       { name: 'Sprint Map', desc: '— Visualizes sprints and backlogs' },
       { name: 'Mention Scan', desc: '— Detects unanswered mentions' }
     ],
-    img: 'Assets/Cards/09-tracker-the-hunter.png', number: '#009 / 030',
+    img: 'Assets/Cards/09-tracker-the-hunter.png', number: '#009 / 033',
     color: '#00D4FF', radius: 8, parent: 'betinho'
   },
   {
-    id: 'oracle', name: 'Oracle', title: 'The Sage', category: 'consulta',
+    id: 'oracle', name: 'Oracle', title: 'The Sage', category: 'consulta', model: 'sonnet',
     tagline: '"The knowledge is there. You just need to know where to look."',
     abilities: [
       { name: 'Page Search', desc: '— Deep search across pages and spaces' },
       { name: 'Update Watch', desc: '— Monitors recent updates' },
       { name: 'Knowledge Map', desc: '— Connects related pages' }
     ],
-    img: 'Assets/Cards/10-oracle-the-sage.png', number: '#010 / 030',
+    img: 'Assets/Cards/10-oracle-the-sage.png', number: '#010 / 033',
     color: '#00D4FF', radius: 8, parent: 'betinho'
   },
   {
-    id: 'keeper', name: 'Keeper', title: 'The Guardian', category: 'consulta',
+    id: 'keeper', name: 'Keeper', title: 'The Guardian', category: 'consulta', model: 'sonnet',
     tagline: '"Every commit tells a story. I guard them all."',
     abilities: [
       { name: 'Repo Watch', desc: '— Monitors repos and pull requests' },
       { name: 'Code Search', desc: '— Searches code by pattern' },
       { name: 'History Trace', desc: '— Tracks commit history' }
     ],
-    img: 'Assets/Cards/11-keeper-the-guardian.png', number: '#011 / 030',
+    img: 'Assets/Cards/11-keeper-the-guardian.png', number: '#011 / 033',
     color: '#00D4FF', radius: 8, parent: 'betinho'
   },
   {
-    id: 'scout', name: 'Scout', title: 'The Watcher', category: 'consulta',
+    id: 'scout', name: 'Scout', title: 'The Watcher', category: 'consulta', model: 'sonnet',
     tagline: '"I see every click, every signup, every conversion."',
     abilities: [
       { name: 'Campaign Radar', desc: '— Monitors all campaigns by publisher' },
       { name: 'Conversion Track', desc: '— Tracks full funnel' },
       { name: 'ROI Lens', desc: '— Calculates real CPA and ROI' }
     ],
-    img: 'Assets/Cards/12-scout-the-watcher.png', number: '#012 / 030',
+    img: 'Assets/Cards/12-scout-the-watcher.png', number: '#012 / 033',
     color: '#1AE8FF', radius: 10, parent: 'betinho'
   },
   {
-    id: 'lens', name: 'Lens', title: 'The Seer', category: 'consulta',
+    id: 'lens', name: 'Lens', title: 'The Seer', category: 'consulta', model: 'sonnet',
     tagline: '"Past the numbers, I see the truth they\'re trying to tell you."',
     abilities: [
       { name: 'DAX Vision', desc: '— Executes DAX queries for KPIs' },
       { name: 'Dashboard Read', desc: '— Reads complete dashboards' },
       { name: 'Trend Prophecy', desc: '— Identifies trends and projects scenarios' }
     ],
-    img: 'Assets/Cards/13-lens-the-seer.png', number: '#013 / 030',
+    img: 'Assets/Cards/13-lens-the-seer.png', number: '#013 / 033',
     color: '#1AE8FF', radius: 10, parent: 'betinho'
   },
   {
-    id: 'sentinel', name: 'Sentinel', title: 'The Commander', category: 'composto',
+    id: 'sentinel', name: 'Sentinel', title: 'The Commander', category: 'composto', model: 'sonnet',
     tagline: '"Six agents. One briefing. Your day, decoded before coffee."',
     abilities: [
       { name: 'Dawn Protocol', desc: '— Launches 6 agents in parallel' },
       { name: 'Cross-Source Intel', desc: '— Correlates all data sources' },
       { name: 'Priority Matrix', desc: '— Ranks actions by urgency and impact' }
     ],
-    img: 'Assets/Cards/14-sentinel-the-commander.png', number: '#014 / 030',
+    img: 'Assets/Cards/14-sentinel-the-commander.png', number: '#014 / 033',
     color: '#AA44FF', radius: 12, parent: 'betinho'
   },
   {
-    id: 'nexus', name: 'Nexus', title: 'The Strategist', category: 'composto',
+    id: 'nexus', name: 'Nexus', title: 'The Strategist', category: 'composto', model: 'sonnet',
     tagline: '"Separate data is noise. Connected data is power."',
     abilities: [
       { name: 'Data Fusion', desc: '— Crosses Power BI + MyAffiliates' },
       { name: 'Funnel Architect', desc: '— Rebuilds full conversion funnel' },
       { name: 'Source Router', desc: '— Auto-decides which source to query' }
     ],
-    img: 'Assets/Cards/15-nexus-the-strategist.png', number: '#015 / 030',
+    img: 'Assets/Cards/15-nexus-the-strategist.png', number: '#015 / 033',
     color: '#AA44FF', radius: 12, parent: 'betinho'
   },
   {
-    id: 'polyglot', name: 'Polyglot', title: 'The Linguist', category: 'producao',
+    id: 'polyglot', name: 'Polyglot', title: 'The Linguist', category: 'producao', model: 'sonnet',
     tagline: '"One thought. Three languages. Zero meaning lost."',
     abilities: [
       { name: 'Triple Render', desc: '— Translates to EN, ES, PT-BR' },
       { name: 'Tone Match', desc: '— Preserves tone and formality' },
       { name: 'Tech Fluency', desc: '— iGaming, marketing, tech terminology' }
     ],
-    img: 'Assets/Cards/16-polyglot-the-linguist.png', number: '#016 / 030',
+    img: 'Assets/Cards/16-polyglot-the-linguist.png', number: '#016 / 033',
     color: '#44CC88', radius: 9, parent: 'betinho'
   },
   {
-    id: 'painter', name: 'Painter', title: 'The Artist', category: 'producao',
+    id: 'painter', name: 'Painter', title: 'The Artist', category: 'producao', model: 'sonnet',
     tagline: '"Give me markdown. I\'ll give you a masterpiece."',
     abilities: [
       { name: 'Style Forge', desc: '— Converts Markdown to HTML with BW CSS' },
       { name: 'Brand Lock', desc: '— Maintains visual consistency' },
       { name: 'Responsive Craft', desc: '— Adapts layout for any format' }
     ],
-    img: 'Assets/Cards/17-painter-the-artist.png', number: '#017 / 030',
+    img: 'Assets/Cards/17-painter-the-artist.png', number: '#017 / 033',
     color: '#44CC88', radius: 8, parent: 'betinho'
   },
   {
-    id: 'press', name: 'Press', title: 'The Printer', category: 'producao',
+    id: 'press', name: 'Press', title: 'The Printer', category: 'producao', model: 'haiku',
     tagline: '"From screen to paper. Pixel-perfect, every time."',
     abilities: [
       { name: 'PDF Forge', desc: '— Generates PDFs via WeasyPrint' },
       { name: 'Page Break Master', desc: '— Precise page break control' },
       { name: 'Print Ready', desc: '— A4, margins, headers/footers' }
     ],
-    img: 'Assets/Cards/18-press-the-printer.png', number: '#018 / 030',
+    img: 'Assets/Cards/18-press-the-printer.png', number: '#018 / 033',
     color: '#44CC88', radius: 8, parent: 'betinho'
   },
   {
-    id: 'forge', name: 'Forge', title: 'The Factory', category: 'producao',
+    id: 'forge', name: 'Forge', title: 'The Factory', category: 'producao', model: 'sonnet',
     tagline: '"One command. Nine files. Three languages. All perfect."',
     abilities: [
       { name: 'Mass Production', desc: '— Translate + HTML + PDF in parallel' },
       { name: 'Quality Control', desc: '— Verifies consistency across versions' },
       { name: 'Assembly Line', desc: '— Orchestrates Polyglot + Painter + Press' }
     ],
-    img: 'Assets/Cards/19-forge-the-factory.png', number: '#019 / 030',
+    img: 'Assets/Cards/19-forge-the-factory.png', number: '#019 / 033',
     color: '#44CC88', radius: 9, parent: 'betinho'
   },
   {
-    id: 'detective', name: 'Detective', title: 'The Investigator', category: 'producao',
+    id: 'detective', name: 'Detective', title: 'The Investigator', category: 'producao', model: 'sonnet',
     tagline: '"Frame by frame. Screen by screen. Every detail catalogued."',
     abilities: [
       { name: 'Frame Extract', desc: '— Captures key frames from videos' },
       { name: 'Screen Map', desc: '— Maps screens, fields, verifications' },
       { name: 'Compliance Check', desc: '— Verifies regulatory compliance' }
     ],
-    img: 'Assets/Cards/20-detective-the-investigator.png', number: '#020 / 030',
+    img: 'Assets/Cards/20-detective-the-investigator.png', number: '#020 / 033',
     color: '#44CC88', radius: 9, parent: 'betinho'
   },
   {
-    id: 'judge', name: 'Judge', title: 'The Jurist', category: 'especializado',
+    id: 'judge', name: 'Judge', title: 'The Jurist', category: 'especializado', model: 'opus',
     tagline: '"The law is complex. My analysis is clear."',
     abilities: [
       { name: 'Legal Scan', desc: '— Consults Brazilian gambling legislation' },
       { name: 'Compliance Shield', desc: '— Verifies LGPD and regulatory compliance' },
       { name: 'Contract Eye', desc: '— Analyzes contracts, identifies risks' }
     ],
-    img: 'Assets/Cards/21-judge-the-jurist.png', number: '#021 / 030',
+    img: 'Assets/Cards/21-judge-the-jurist.png', number: '#021 / 033',
     color: '#E8445A', radius: 10, parent: 'betinho'
   },
   {
-    id: 'surgeon', name: 'Surgeon', title: 'The Analyst', category: 'especializado',
+    id: 'surgeon', name: 'Surgeon', title: 'The Analyst', category: 'especializado', model: 'sonnet',
     tagline: '"I don\'t just read tickets. I dissect entire epics."',
     abilities: [
       { name: 'Epic Dissection', desc: '— Deep analysis of epics with subtasks' },
       { name: 'Bottleneck Finder', desc: '— Identifies flow blockers' },
       { name: 'Quantitative Report', desc: '— Quali + quanti project reports' }
     ],
-    img: 'Assets/Cards/22-surgeon-the-analyst.png', number: '#022 / 030',
+    img: 'Assets/Cards/22-surgeon-the-analyst.png', number: '#022 / 033',
     color: '#E8445A', radius: 9, parent: 'betinho'
   },
   {
-    id: 'strategist', name: 'Strategist', title: 'The Advisor', category: 'especializado',
+    id: 'strategist', name: 'Strategist', title: 'The Advisor', category: 'especializado', model: 'sonnet',
     tagline: '"Walk into every meeting three steps ahead."',
     abilities: [
       { name: 'Briefing Forge', desc: '— Prepares complete pre-meeting briefing' },
       { name: 'People Intel', desc: '— Compiles profile and history' },
       { name: 'Agenda Align', desc: '— Connects agenda with tickets and emails' }
     ],
-    img: 'Assets/Cards/23-strategist-the-advisor.png', number: '#023 / 030',
+    img: 'Assets/Cards/23-strategist-the-advisor.png', number: '#023 / 033',
     color: '#E8445A', radius: 9, parent: 'betinho'
   },
   {
-    id: 'watchman', name: 'Watchman', title: 'The Observer', category: 'especializado',
+    id: 'watchman', name: 'Watchman', title: 'The Observer', category: 'especializado', model: 'sonnet',
     tagline: '"While you sleep, I watch the wiki."',
     abilities: [
       { name: 'Page Monitor', desc: '— Watches specific pages for changes' },
       { name: 'Change Alert', desc: '— Alerts on relevant updates' },
       { name: 'Diff Report', desc: '— Shows exactly what changed and who' }
     ],
-    img: 'Assets/Cards/24-watchman-the-observer.png', number: '#024 / 030',
+    img: 'Assets/Cards/24-watchman-the-observer.png', number: '#024 / 033',
     color: '#E8445A', radius: 8, parent: 'betinho'
   },
   {
-    id: 'treasurer', name: 'Treasurer', title: 'The Accountant', category: 'especializado',
+    id: 'treasurer', name: 'Treasurer', title: 'The Accountant', category: 'especializado', model: 'sonnet',
     tagline: '"Every real accounted for. Every cent justified."',
     abilities: [
       { name: 'Budget Map', desc: '— Planned vs actual visualization' },
       { name: 'Spend Alert', desc: '— Flags budget deviations' },
       { name: 'Forecast', desc: '— Projects financial scenarios' }
     ],
-    img: 'Assets/Cards/25-treasurer-the-accountant.png', number: '#025 / 030',
+    img: 'Assets/Cards/25-treasurer-the-accountant.png', number: '#025 / 033',
     color: '#E8445A', radius: 9, parent: 'betinho'
   },
   {
-    id: 'recruiter', name: 'Recruiter', title: 'The Headhunter', category: 'especializado',
+    id: 'recruiter', name: 'Recruiter', title: 'The Headhunter', category: 'especializado', model: 'sonnet',
     tagline: '"The right person for the right role. I find them."',
     abilities: [
       { name: 'JD Forge', desc: '— Creates structured Job Descriptions' },
       { name: 'Talent Map', desc: '— Maps required vs available profiles' },
       { name: 'Salary Bench', desc: '— Salary benchmarks by role and market' }
     ],
-    img: 'Assets/Cards/26-recruiter-the-headhunter.png', number: '#026 / 030',
+    img: 'Assets/Cards/26-recruiter-the-headhunter.png', number: '#026 / 033',
     color: '#E8445A', radius: 9, parent: 'betinho'
   },
   {
-    id: 'director', name: 'Director', title: 'The Producer', category: 'especializado',
+    id: 'director', name: 'Director', title: 'The Producer', category: 'especializado', model: 'sonnet',
     tagline: '"From raw ideas to polished episodes. That\'s my craft."',
     abilities: [
       { name: 'Script Forge', desc: '— Generates podcast scripts with timing' },
       { name: 'Segment Design', desc: '— Structures segments with transitions' },
       { name: 'Content Adapt', desc: '— Transforms docs into podcast format' }
     ],
-    img: 'Assets/Cards/27-director-the-producer.png', number: '#027 / 030',
+    img: 'Assets/Cards/27-director-the-producer.png', number: '#027 / 033',
     color: '#E8445A', radius: 8, parent: 'betinho'
   },
   {
-    id: 'printer', name: 'Printer', title: 'The Formatter', category: 'especializado',
+    id: 'printer', name: 'Printer', title: 'The Formatter', category: 'especializado', model: 'haiku',
     tagline: '"Corporate format. Every margin. Every header. Perfect."',
     abilities: [
       { name: 'Template Apply', desc: '— Applies BetWarrior corporate templates' },
       { name: 'Format Convert', desc: '— Converts Markdown to .docx' },
       { name: 'Brand Enforce', desc: '— Ensures brand guideline consistency' }
     ],
-    img: 'Assets/Cards/28-printer-the-formatter.png', number: '#028 / 030',
+    img: 'Assets/Cards/28-printer-the-formatter.png', number: '#028 / 033',
     color: '#E8445A', radius: 8, parent: 'betinho'
   },
   {
-    id: 'librarian', name: 'Librarian', title: 'The Curator', category: 'manutencao',
+    id: 'librarian', name: 'Librarian', title: 'The Curator', category: 'manutencao', model: 'haiku',
     tagline: '"I never rest. While you work, I organize."',
     abilities: [
       { name: 'Auto Catalog', desc: '— Catalogs new people, projects, vendors' },
       { name: 'Profile Keep', desc: '— Keeps profiles updated with each interaction' },
       { name: 'Silent Watch', desc: '— Operates in background without interrupting' }
     ],
-    img: 'Assets/Cards/29-librarian-the-curator.png', number: '#029 / 030',
+    img: 'Assets/Cards/29-librarian-the-curator.png', number: '#029 / 033',
     color: '#CC44FF', radius: 10, parent: 'betinho'
-  }
+  },
+  {
+    id: 'kpi', name: 'KPI', title: 'The Pulse', category: 'composto', model: 'sonnet',
+    tagline: '"Every day, every metric, every dashboard. Automated."',
+    abilities: [
+      { name: 'DAX Engine', desc: '— Executes 70+ Power BI queries daily' },
+      { name: 'Firestore Sync', desc: '— Saves structured data for dashboard' },
+      { name: 'Slack Beacon', desc: '— Notifies team when data is ready' }
+    ],
+    img: 'Assets/Cards/30-kpi-the-pulse.png', number: '#030 / 033',
+    color: '#1AE8FF', radius: 11, parent: 'betinho'
+  },
+  {
+    id: 'podforge', name: 'PodForge', title: 'The Voice', category: 'especializado', model: 'gemini',
+    tagline: '"From documents to podcasts. Every story deserves to be heard."',
+    abilities: [
+      { name: 'Script Forge', desc: '— Generates dual-host podcast scripts' },
+      { name: 'Audio Render', desc: '— Produces MP3 with natural voices' },
+      { name: 'Multi-Language', desc: '— 90+ languages, 30 voice options' }
+    ],
+    img: 'Assets/Cards/31-podforge-the-voice.png', number: '#031 / 033',
+    color: '#E8445A', radius: 8, parent: 'betinho'
+  },
+  {
+    id: 'courier', name: 'Courier', title: 'The Diplomat', category: 'producao', model: 'sonnet',
+    tagline: '"Every message, perfectly formatted. Every email, a statement."',
+    abilities: [
+      { name: 'MD to Email', desc: '— Converts markdown to formatted HTML email' },
+      { name: 'Brand Standard', desc: '— Applies BetWarrior visual identity' },
+      { name: 'Draft Forge', desc: '— Creates Gmail drafts ready to send' }
+    ],
+    img: 'Assets/Cards/32-courier-the-diplomat.png', number: '#032 / 033',
+    color: '#44CC88', radius: 9, parent: 'betinho'
+  },
 ];
 
+
+// Model badge colors
+const modelColors = { opus: '#FFD700', sonnet: '#00D4FF', haiku: '#44CC88', gemini: '#4285F4', human: '#FF3900' };
+const modelLabels = { opus: 'OPUS', sonnet: 'SONNET', haiku: 'HAIKU', gemini: 'GEMINI', human: 'HUMAN' };
 // Build links — parent relationships + inter-agent connections
 const links = [];
 // Parent links
@@ -937,6 +982,14 @@ const interLinks = [
   ['polyglot', 'treasurer'],  // Polyglot supports Treasurer
   ['grid', 'echo'],           // Grid data from Slack
   ['treasurer', 'recruiter'], // Treasurer works with Recruiter
+  ['scout', 'watchman'],      // Scout monitors Watchman
+  ['painter', 'kpi'],         // Painter formats KPI reports
+  ['kpi', 'tracker'],         // KPI feeds Tracker data
+  ['courier', 'postman'],       // Courier works with Gmail
+  ['courier', 'painter'],       // Courier uses HTML formatting
+  ['kpi', 'lens'],           // KPI uses Power BI
+  ['kpi', 'echo'],           // KPI notifies Slack
+  ['podforge', 'scribe'],    // PodForge reads Docs
 ];
 interLinks.forEach(([a, b]) => {
   const si = agents.findIndex(n => n.id === a);
@@ -1029,7 +1082,7 @@ function simulate() {
       let dx = agents[j].x - agents[i].x;
       let dy = agents[j].y - agents[i].y;
       let d = Math.sqrt(dx * dx + dy * dy) || 1;
-      let minDist = agents[i].radius + agents[j].radius + 60;
+      let minDist = agents[i].radius + agents[j].radius + 80;
       if (d < minDist) {
         let push = (minDist - d) * 0.4;
         agents[i].x -= (dx / d) * push;
@@ -1045,7 +1098,7 @@ function simulate() {
     if (a.id === 'betinho' || a.id === 'jp') return;
     let dx = centerX - a.x, dy = centerY - a.y;
     let d = Math.sqrt(dx * dx + dy * dy) || 1;
-    let targetDist = 240;
+    let targetDist = 310;
     // Only pull back if too far
     let force = d > targetDist ? (d - targetDist) * 0.015 : 0;
     a.x += (dx / d) * force;
@@ -1282,6 +1335,15 @@ function openCard(agent) {
   document.getElementById('cardNameText').textContent = agent.name;
   document.getElementById('cardTitleText').textContent = title;
   document.getElementById('cardNumberText').textContent = agent.number;
+
+  // Model badge
+  const badge = document.getElementById('cardModelBadge');
+  const mc = modelColors[agent.model] || '#666';
+  badge.textContent = modelLabels[agent.model] || agent.model;
+  badge.style.color = mc;
+  badge.style.border = `1px solid ${mc}`;
+  badge.style.background = mc.replace(')', ',0.15)').replace('rgb', 'rgba').replace('#', '');
+  badge.style.background = `${mc}22`;
 
   const abArea = document.getElementById('cardAbilities');
   const abilities = i18n.abilities[agent.id] ? i18n.abilities[agent.id][currentLang] : agent.abilities;
